@@ -9,7 +9,7 @@ It also has a default GUI and basic OI strategy systems for the certain game pro
 
 ## about development
 
-OIASG is based on python and [pyglet](http://pyglet.org/).
+OIASG is based on python 3 and [pyglet](http://pyglet.org/).
 
 We use modified(mainly debugging) pyglet 1.3.1 for windows.You can get the modifications form `/pyglet`.
 
