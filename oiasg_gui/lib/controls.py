@@ -14,7 +14,7 @@ class Posattr(object):
 			return int(width*p[0]+p[1])
 		def c_v(p):
 			return int(height*p[0]+p[1])
-		return x+c_h(self.x),y+c_v(self.y),c_h(self.width),c_v(self.height)		
+		return x+c_h(self.x),y+c_v(self.y),c_h(self.width),c_v(self.height)
 		
 # 精灵（用于控件）
 class Sprite(pyglet.sprite.Sprite):
@@ -349,6 +349,16 @@ class Viewport(Frame):
 		t.blit(0,0)
 		f.blit(self.x,self.y)
 
+# 自动布局框架
+class LayoutFrame(Frame):
+	_layouter = None
+	def relayout(self):
+		self.layouter(self)
+	def set_layouter(self, layouter):
+		self._layouter = layouter
+		self.relayout()
+	layouter = property(lambda self:self._layouter,set_layouter)
+
 # 图片框架
 class ImageFrame(Frame):
 	# back:背景图片(AbstractImage)
@@ -368,10 +378,22 @@ class ImageFrame(Frame):
 		if self.front is not None:
 			self.front.update(x = self.x, y = self.y, scale_x = self.width / self.front.t_width , scale_y = self.height / self.front.t_height)
 
+def ButtonSlider_defaultlayout(self):
+	PADDING_RATE = 0.2
+	HPADDING_RATE = 0.5
+	VPADDING_RATE = 0.15
+	rate = 1/(len(self.sons)*(1+PADDING_RATE)-PADDING_RATE+2*HPADDING_RATE)
+	padding_rate = PADDING_RATE * rate
+	hpadding_rate = HPADDING_RATE * rate
+	cur_t = hpadding_rate
+	for i in self.sons:
+		i.pos = Posattr((cur_t,0),(VPADDING_RATE,0),(rate,0),(1-VPADDING_RATE*2,0))
+		cur_t += rate + padding_rate
 # 按钮条
-class ButtonSlider(ImageFrame):
-	def __init__(self, control, back = None, front = None, buttons = None):
+class ButtonSlider(ImageFrame, LayoutFrame):
+	def __init__(self, control, back = None, front = None, buttons = None, layouter = ButtonSlider_defaultlayout):
 		super(ButtonSlider, self).__init__(control, back, front)
+		self.layouter = layouter
 		self.val = 0
 		if buttons is not None:
 			self.buttons = buttons
@@ -384,6 +406,7 @@ class ButtonSlider(ImageFrame):
 					self.val = i
 				return f
 			self.sons[i].on_press = g(i+1)
+		self.relayout()
 	buttons = property(lambda self:self.sons,set_buttons)
 	def set_val(self, v):
 		self._val = v
@@ -416,17 +439,118 @@ class MessageInteractor(ImageFrame):
 	submit_key = property(lambda self:self._submit_key,set_submit_key_event)
 MessageInteractor.register_event_type('on_submit')
 
+def AlertBox_defaultlayout(self):
+	BUTTON_HEIGHT = 30
+	BUTTON_BLANKING = 10
+	PADDING = 20
+	TITLE_PADDING = 20
+	TITLE_HEIGHT = 30
+	self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
+	cur_h = PADDING
+	self.button.pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
+	cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
+	self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
+class AlertBox(MessageInteractor, LayoutFrame):
+	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), button = Button(()), layouter = AlertBox_defaultlayout):
+		super(AlertBox, self).__init__(control, back, front)
+		self._layouter = layouter
+		self.title = title
+		self.doc = doc
+		self.sons.append(title)
+		self.sons.append(doc)
+		self.button = button
+		self.relayout()
+		self.on_resize()
+	# 注意：请不要多次设置button，否则可能导致on_submit事件触发多次
+	def set_button(self, button):
+		self._button = button
+		self.sons = self.sons[:2]
+		self.sons.append(button)
+		self.submit_key = (button, 'on_press')
+		self.relayout()
+	button = property(lambda self:self._button, set_button)
+	def set_text(self,x):
+		self.doc.text = x
+	text = property(lambda self:self.doc.text,set_text)
+	def set_title_text(self,x):
+		self.title.text = x
+	title_text = property(lambda self:self.title.text,set_title_text)
+
+def MessageBox_defaultlayout(self):
+	BUTTON_HEIGHT = 30
+	BUTTON_BLANKING = 10
+	PADDING = 20
+	TITLE_PADDING = 20
+	TITLE_HEIGHT = 30
+	self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
+	cur_h = PADDING
+	for i in range(len(self.buttons)):
+		self.buttons[i].pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
+		cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
+	self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
 # 提示选择框（含交互）
-class MessageBox(MessageInteractor):
-	pass
+class MessageBox(MessageInteractor, LayoutFrame):
+	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), buttons = None, layouter = MessageBox_defaultlayout):
+		super(MessageBox, self).__init__(control, back, front)
+		self._layouter = layouter
+		self.title = title
+		self.doc = doc
+		self.sons.append(title)
+		self.sons.append(doc)
+		self.buttons = buttons if buttons is not None else []
+		self.relayout()
+		self.on_resize()
+		self.result = 0
+	# 注意：请不要多次设置buttons，否则可能导致on_submit事件触发多次
+	def set_buttons(self, buttons):
+		self._buttons = buttons
+		self.sons = self.sons[:2]
+		self.sons += buttons
+		def f(event, id):
+			def g(*args, **kw):
+				self.result = id
+				self.dispatch_event('on_submit', self.result)
+				return event(*args, **kw)
+			return g
+		for i in range(len(buttons)):
+			buttons[i].on_press = f(buttons[i].on_press, i)
+		self.relayout()
+	buttons = property(lambda self:self._buttons, set_buttons)
+	def set_text(self,x):
+		self.doc.text = x
+	text = property(lambda self:self.doc.text,set_text)
+	def set_title_text(self,x):
+		self.title.text = x
+	title_text = property(lambda self:self.title.text,set_title_text)
+	def on_submit(self, result):
+		# print('on_submit:%d' % result)
+		self.hide()
 
 # 提示输入框（含交互）
-class MessageInput(MessageInteractor):
-	pass
+class MessageInput(AlertBox):
+	# editable
+	def set_submit_key_event(self, event):
+		obj, eventname = event
+		# print('set_submit_key_event')
+		def f(event):
+			def g(*args, **kw):
+				self.dispatch_event('on_submit', self.text)
+				# print('on_submit_')
+				return event(*args, **kw)
+			return g
+		setattr(obj, eventname ,f(getattr(obj, eventname)))
+		self._submit_key = getattr(obj, eventname)
+	def on_submit(self, text):
+		# print('on_submit:%s' % text)
+		self.hide()
+	submit_key = property(lambda self:self._submit_key,set_submit_key_event)
 
-# 事件页面（含按钮交互）
-class MessagePage(MessageInteractor):
+def MessagePage_defaultlayout(self):
 	pass
+# 事件页面（含过场动画、背景音乐及按钮交互）
+class MessagePage(MessageBox):
+	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), buttons = None, layouter = MessagePage_defaultlayout, CG = None, BGM = None):
+		super(MessagePage, self).__init__(control, back, front, title, doc, buttons, layouter)
 
 # 科技树
 class TechTree(ImageFrame):

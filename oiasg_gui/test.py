@@ -43,7 +43,33 @@ f1.sons = [
 	controls.Viewport((window,0,0,1,1,f1,controls.Posattr((0.1,0),(0.1,0),(0.8,0),(0.8,0))))
 ]
 vport = f1.sons[0]
-		
+gbutton = lambda:controls.Button(
+	(window,25,15,150,30),
+	pyglet.text.Label('提交',font_name='黑体',font_size=16,anchor_x = 'center',anchor_y = 'center'),
+	controls.Sprite(pyglet.resource.image('tbut.png')),
+	controls.Sprite(pyglet.resource.image('tico.png'))
+)
+gtitle = lambda:controls.Label(
+	[window],
+	pyglet.text.Label(
+	'TITLE',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center')
+)
+gtxtbox = lambda:controls.TextBox(
+	[window],
+	'''这是一个多行文本框
+qwq''',
+	{'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'},
+	editable = False,multiline = True,
+	back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
+)
+geditbox = lambda:controls.TextBox(
+	[window],
+	'''这是一个多行文本框
+qwq''',
+	{'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'},
+	editable = True,multiline = True,
+	back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
+)
 vport.sons = [
 	controls.Button(
 		(window,0,0,1,1,vport,controls.Posattr((0,25),(0,55),(0,150),(0,30))),
@@ -105,7 +131,30 @@ qwq''',
 	,
 	controls.SpriteControl(
 		(window,0,0,1,1,vport,controls.Posattr((0.6,0),(0.8,0),(0.1,0),(0.1,0))),
-		controls.Sprite(pyglet.resource.image('bslider.png'))
+		controls.Sprite(pyglet.resource.animation('walk.gif'))
+	)
+	,
+	controls.MessageBox(
+		(window,0,0,800,600,vport,controls.Posattr((0,480),(0,30),(0,250),(0,450))),
+		back = controls.Sprite(pyglet.resource.image('tbut.png')),
+		title = gtitle(),
+		doc = gtxtbox()
+	)
+	,
+	controls.AlertBox(
+		(window,0,0,800,600,vport,controls.Posattr((0,200),(0,300),(0,250),(0,150))),
+		back = controls.Sprite(pyglet.resource.image('tbut.png')),
+		title = gtitle(),
+		doc = gtxtbox(),
+		button = gbutton()
+	)
+	,
+	controls.MessageInput(
+		(window,0,0,800,600,vport,controls.Posattr((0,750),(0,30),(0,250),(0,150))),
+		back = controls.Sprite(pyglet.resource.image('tbut.png')),
+		title = gtitle(),
+		doc = geditbox(),
+		button = gbutton()
 	)
 ]
 		
@@ -121,16 +170,17 @@ qwq''',
 		# image = pyglet.sprite.Sprite(pyglet.resource.image('tbut.png')),
 		# icon = pyglet.sprite.Sprite(pyglet.resource.image('tico.png'))))
 
-button1,txtbox1,prog,sbutton0,slider0,msg,lbl,img = vport.sons
+button1,txtbox1,prog,sbutton0,slider0,msg,lbl,img,msg1,alrt,inp = vport.sons
+
 slider0.buttons = [
 	controls.SwitchButton(
-		(window,0,0,1,1,slider0,controls.Posattr((0.05+0.16*i,0),(0.15,0),(0.14,0),(0.7,0))),
+		(window,0,0,1,1,slider0),
 		images = [
 			controls.Sprite(pyglet.resource.image('sliderf0.png')),
 			controls.Sprite(pyglet.resource.image('sliderf1.png'))
 		]
 	)
-	for i in range(5)
+	for i in range(10)
 ]
 msg.sons = [
 	controls.Button(
@@ -150,11 +200,15 @@ msg.sons = [
 ]
 submitb,intertxt = msg.sons
 msg.submit_key = (submitb, 'on_press')
+
+msg1.buttons = [gbutton(),gbutton(),gbutton()]
 # button1.label.text = '111'
 # print(button1.text)
 # button1.text = '11'
+BALL_SOUND = pyglet.resource.media('ball.wav', streaming=False)
 def onp():
 	print('pressed button 0')
+	BALL_SOUND.play()
 	if button0.text == '隐藏其它':
 		button0.text = '显示其它'
 	else:
@@ -192,15 +246,22 @@ def onschange(val):
 	print('slider changed:new val = %s' % val)
 	
 def onsubmit():
+	print()
 	print('submitted')
 	msg.hide()
 	txtbox1.text = intertxt.text
+	
+# def onsubmit1(result):
+	# print('submitted msg1')
+	# msg1.hide()
+	# print(msg1.result)
 	
 button0.on_press = onp
 button1.on_press = onp1
 sbutton0.on_press = onps
 slider0.on_change = onschange
 msg.on_submit = onsubmit
+# msg1.on_submit = onsubmit1
 
 window.show()
 pyglet.app.run()
