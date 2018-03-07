@@ -3,19 +3,6 @@
 
 import pyglet
 
-# 精灵（用于控件）
-class Sprite(pyglet.sprite.Sprite):
-	def show(self):
-		self.visible = True
-	def hide(self):
-		self.visible = False
-	@property
-	def t_width(self):
-		return self._texture.width
-	@property
-	def t_height(self):
-		return self._texture.height
-		
 class Posattr(object):
 	def __init__(self,x = (0,0), y = (0,0), width = (1,0), height = (1,0)):
 		self.x = x
@@ -24,21 +11,36 @@ class Posattr(object):
 		self.height = height
 	def __call__(self,x,y,width,height):
 		def c_h(p):
-			return width*p[0]+p[1]
+			return int(width*p[0]+p[1])
 		def c_v(p):
-			return height*p[0]+p[1]
-		return x+c_h(self.x),y+c_v(self.y),c_h(self.width),c_v(self.height)
+			return int(height*p[0]+p[1])
+		return x+c_h(self.x),y+c_v(self.y),c_h(self.width),c_v(self.height)		
+		
+# 精灵（用于控件）
+class Sprite(pyglet.sprite.Sprite):
+	def show(self):
+		self.visible = True
+	def hide(self):
+		self.visible = False
+	def on_resize(self):
+		pass
+	@property
+	def t_width(self):
+		return self._texture.width
+	@property
+	def t_height(self):
+		return self._texture.height
 		
 # 控件
 class Control(pyglet.event.EventDispatcher):
 	# x,y:控件位置
 	# width,height:控件大小
 	# visible:是否在显示
-	visible = False
-	sons = []
-	def __init__(self, window = None, x = 0, y = 0, width = 0, height = 0, parent = None, pos = Posattr()):
+	def __init__(self, window = None, x = 0, y = 0, width = 1, height = 1, parent = None, pos = Posattr()):
 		super(Control, self).__init__()
 		# parent:控件的上级
+		self.visible = False
+		self.sons = []
 		self.window = window
 		self.x = x
 		self.y = y
@@ -85,7 +87,38 @@ class Control(pyglet.event.EventDispatcher):
 			self.window.remove_handlers(self)
 Control.register_event_type('on_mouse_press')
 
-# 按钮
+# 标签（用于控件）
+class Label(Control):
+	def __init__(self, control, label = None):
+		super(Label, self).__init__(*control)
+		self.label = label
+		self.on_resize()
+	def set_text(self, x):
+		self.label.text = x
+	text = property(lambda self:self.label.text,set_text)
+	def on_resize(self):
+		super(Label, self).on_resize()
+		if self.label is not None:
+			self.label.x = self.x + self.width / 2
+			self.label.y = self.y + self.height / 2
+	def draw(self):
+		super(Label, self).draw()
+		self._draw(self.label)
+
+# 精灵控件
+class SpriteControl(Control):
+	def __init__(self, control, image = None):
+		super(SpriteControl, self).__init__(*control)
+		self.image = image
+		self.on_resize()
+	def on_resize(self):
+		super(SpriteControl, self).on_resize()
+		if self.image is not None:
+			self.image.update(x = self.x, y = self.y, scale_x = self.width / self.image.t_width , scale_y = self.height / self.image.t_height)
+	def draw(self):
+		super(SpriteControl, self).draw()
+		self._draw(self.image)
+
 class Button(Control):
 	# image:背景图片(Sprite类型)
 	# icon:(左侧)图标(Sprite类型)
@@ -135,11 +168,11 @@ class Button(Control):
 			if self.pressed_image is not None:
 				self.pressed_image.draw()
 			elif self.image is not None:
-				self.image.color = (216,204,192)
+				# self.image.color = (216,204,192)
 				self.image.draw()
 		else:
 			if self.image is not None:
-				self.image.color = (255,255,255)
+				# self.image.color = (255,255,255)
 				self.image.draw()
 	def draw(self):
 		# print('drawn a button')
@@ -161,9 +194,36 @@ class Button(Control):
 		if self.hit_test(x, y):
 			self.dispatch_event('on_press')
 		self.charged = False
+	def on_press(self):
+		pass
 # on_press:从按钮松开时触发事件
 Button.register_event_type('on_press')
 
+# 多外观按钮
+class SwitchButton(Button):
+	def __init__(self, control, labels = None, images = None, icons = None, pressed_images = None, direction = 0):
+		super(SwitchButton, self).__init__(control)
+		self.labels = labels
+		self.images = images
+		self.icons = icons
+		self.pressed_images = pressed_images
+		self.direction = direction
+		self.stage = 0		
+	def _get(self, x, id):
+		if x is None:
+			return None
+		elif len(x) > id:
+			return x[id]
+		else:
+			return None
+	def set_stage(self, _stage):
+		self._stage = _stage
+		self.label = self._get(self.labels,self.stage)
+		self.image = self._get(self.images,self.stage)
+		self.icon = self._get(self.icons,self.stage)
+		self.pressed_image = self._get(self.pressed_images,self.stage)
+		self.on_resize()
+	stage = property(lambda self:self._stage,set_stage)
 
 # 光标（不返回EVENT_HANDLED）
 class Caret(pyglet.text.caret.Caret):
@@ -198,9 +258,9 @@ class TextBox(Control):
 		if self.editable:
 			self.caret = Caret(self.layout,color = (caret_color if caret_color is not None else (style['color'][:3] if style.get('color') else (0,0,0))))
 		self.on_resize()
-		self.text = property(lambda self:self.doc.text,self.set_text)
 	def set_text(self,x):
 		self.doc.text = x
+	text = property(lambda self:self.doc.text,set_text)
 	def on_resize(self):
 		super(TextBox, self).on_resize()
 		if self.back is not None:
@@ -280,57 +340,23 @@ class Frame(Control):
 			i.x , i.y , i.width ,i.height = i.pos(self.x,self.y,self.width,self.height)
 			i.on_resize()
 
-# 视口覆盖器（很不优美但是比较简便的解决方案）
-# 注意！它渲染时会覆盖页面其余部分，请嵌套使用
-# 多数时候请把含有覆盖器的控件放在其父亲sons[]的首位
+# 视口
 class Viewport(Frame):
-	# back:背景图片(AbstractImage)
-	def __init__(self, control, back = None, shade_sizerate = (0,0,1,1)):
-		self.back = back
-		self.shade_sizerate = shade_sizerate
-		super(Viewport, self).__init__(control)
-	def on_resize(self):
-		super(Viewport, self).on_resize()
-		if self.back is not None:
-			self.back.update(x = self.x, y = self.y, scale_x = self.width / self.back.t_width , scale_y = self.height / self.back.t_height)
-	@property
-	def v_l(self):
-		return self.x+int(self.shade_sizerate[0]*self.width)
-	@property
-	def v_d(self):
-		return self.y+int(self.shade_sizerate[1]*self.height)
-	@property
-	def v_width(self):
-		return int(self.shade_sizerate[2]*self.width)
-	@property
-	def v_height(self):
-		return int(self.shade_sizerate[3]*self.height)
-	@property
-	def v_u(self):
-		return self.v_d + self.v_height
-	@property
-	def v_r(self):
-		return self.v_l + self.v_width
 	def draw(self):
+		t = pyglet.image.get_buffer_manager().get_color_buffer().get_texture()
 		super(Viewport, self).draw()
-		t = pyglet.image.get_buffer_manager().get_color_buffer().get_region(self.v_l,self.v_d,self.v_width,self.v_height).get_texture()
-		self._draw(self.back)
-		t.blit(self.v_l,self.v_d)
-	def on_mouse_press(self, x, y, button, modifiers):
-		if self.v_l<=x and x<=self.v_r and self.v_d<=y and y<=self.v_u:
-			for i in self.sons:
-				if i.visible and i.hit_test(x,y):
-					i.on_mouse_press(x, y, button, modifiers) 
+		f = pyglet.image.get_buffer_manager().get_color_buffer().get_region(self.x,self.y,self.width,self.height).get_texture()
+		t.blit(0,0)
+		f.blit(self.x,self.y)
 
 # 图片框架
 class ImageFrame(Frame):
 	# back:背景图片(AbstractImage)
 	# front:前景图片(AbstractImage)
 	def __init__(self, control, back = None, front = None):
-		super(ImageFrame, self).__init__(*control)
 		self.back = back
 		self.front = front
-		self.on_resize()
+		super(ImageFrame, self).__init__(control)
 	def draw(self):
 		self._draw(self.back)
 		super(ImageFrame, self).draw()
@@ -341,35 +367,75 @@ class ImageFrame(Frame):
 			self.back.update(x = self.x, y = self.y, scale_x = self.width / self.back.t_width , scale_y = self.height / self.back.t_height)
 		if self.front is not None:
 			self.front.update(x = self.x, y = self.y, scale_x = self.width / self.front.t_width , scale_y = self.height / self.front.t_height)
-	
+
 # 按钮条
-class ButtonSlider(Frame):
+class ButtonSlider(ImageFrame):
+	def __init__(self, control, back = None, front = None, buttons = None):
+		super(ButtonSlider, self).__init__(control, back, front)
+		self.val = 0
+		if buttons is not None:
+			self.buttons = buttons
+	def set_buttons(self, v):
+		# print('set_buttons')
+		self.sons = v
+		for i in range(len(self.sons)):
+			def g(i):
+				def f():
+					self.val = i
+				return f
+			self.sons[i].on_press = g(i+1)
+	buttons = property(lambda self:self.sons,set_buttons)
+	def set_val(self, v):
+		self._val = v
+		for i in range(min(v,len(self.sons))):
+			self.sons[i].stage = 0
+		for i in range(v,len(self.sons)):
+			self.sons[i].stage = 1
+		self.dispatch_event('on_change',self._val)
+	val = property(lambda self:self._val,set_val)
+	def on_change(self, val):
+		pass
+ButtonSlider.register_event_type('on_change')
+
+# 交互式事件窗口
+class MessageInteractor(ImageFrame):
+	def set_submit_key_event(self, event):
+		obj, eventname = event
+		# print('set_submit_key_event')
+		def f(event):
+			def g(*args, **kw):
+				self.dispatch_event('on_submit')
+				# print('on_submit_')
+				return event(*args, **kw)
+			return g
+		setattr(obj, eventname ,f(getattr(obj, eventname)))
+		self._submit_key = getattr(obj, eventname)
+	def on_submit(self):
+		# print('on_submit')
+		self.hide()
+	submit_key = property(lambda self:self._submit_key,set_submit_key_event)
+MessageInteractor.register_event_type('on_submit')
+
+# 提示选择框（含交互）
+class MessageBox(MessageInteractor):
 	pass
 
-# 按钮菜单
-class ButtonMenu(Frame):
-	pass
-
-# （屏幕中间）提示选择框（含交互）
-class MessageBox(Frame):
-	pass
-
-# （屏幕中间）提示输入框（含交互）
-class MessageInput(Frame):
+# 提示输入框（含交互）
+class MessageInput(MessageInteractor):
 	pass
 
 # 事件页面（含按钮交互）
-class MessagePage(Frame):
+class MessagePage(MessageInteractor):
 	pass
 
 # 科技树
-class TechTree(Frame):
+class TechTree(ImageFrame):
 	class TechTreeNode(object):
 		pass
 	pass
 
 # 带标签的页面
-class TagPages(Frame):
+class TagPages(ImageFrame):
 	pass
 
 class Form(pyglet.window.Window):

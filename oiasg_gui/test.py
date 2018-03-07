@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import copy
 import random
 import time
 
@@ -23,31 +24,91 @@ def on_resize(width, height):
 # mv.play()
 
 root.sons = [
-	controls.Viewport((window,0,0,800,600,root),
-	controls.Sprite(pyglet.resource.image('tbut.png')),
-	(0.05,0.05,0.9,0.9))
+	controls.ImageFrame(
+		(window,0,0,800,600,root),
+		back = controls.Sprite(pyglet.resource.image('tbut.png')),
+		front = controls.Sprite(pyglet.resource.image('tframe.png'))
+	)
 	,
-	controls.Button((window,25,15,150,30,root,controls.Posattr((0,25),(0,15),(0,150),(0,30))),pyglet.text.Label('隐藏其它',font_name='微软雅黑',font_size=16,anchor_x = 'center',anchor_y = 'center')
-	,controls.Sprite(pyglet.resource.image('tbut.png'))
-	,controls.Sprite(pyglet.resource.image('tico.png'))
-	,controls.Sprite(pyglet.resource.image('t.png'))
+	controls.Button(
+		(window,25,15,150,30,root,controls.Posattr((0,25),(0,15),(0,150),(0,30))),
+		pyglet.text.Label('隐藏其它',font_name='微软雅黑',font_size=16,anchor_x = 'center',anchor_y = 'center'),
+		controls.Sprite(pyglet.resource.image('tbut.png')),
+		controls.Sprite(pyglet.resource.image('tico.png')),
+		controls.Sprite(pyglet.resource.image('t.png'))
 	)
 ]
-vport,button0 = root.sons
+f1,button0 = root.sons
+f1.sons = [
+	controls.Viewport((window,0,0,1,1,f1,controls.Posattr((0.1,0),(0.1,0),(0.8,0),(0.8,0))))
+]
+vport = f1.sons[0]
+		
 vport.sons = [
-	controls.Button((window,25,55,150,30,root,controls.Posattr((0,25),(0,55),(0,150),(0,30))),pyglet.text.Label('+=10%',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center')
-	,controls.Sprite(pyglet.resource.image('tbut.png'))
-	,controls.Sprite(pyglet.resource.image('tico.png'))
+	controls.Button(
+		(window,0,0,1,1,vport,controls.Posattr((0,25),(0,55),(0,150),(0,30))),
+		pyglet.text.Label('+=10%',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center'),
+		controls.Sprite(pyglet.resource.image('tbut.png')),
+		controls.Sprite(pyglet.resource.image('tico.png'))
 	),
-	controls.TextBox((window,25,100,150,150,root,controls.Posattr((0,25),(0,100),(0,150),(0,150))),'''这是一个多行文本框
+	controls.TextBox(
+		(window,0,0,1,1,vport,controls.Posattr((0,25),(0,100),(0,150),(0,150))),
+		'''这是一个多行文本框
 qwq''',
-	{'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'},editable = True,
-	multiline = True,back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
+		{'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'},
+		editable = False,multiline = True,
+		back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
 	)
 	,
-	controls.ProgressBar((window,25,265,150,20,root,controls.Posattr((0,25),(0,265),(0,150),(0,20))),pyglet.text.Label('%',font_size=14,bold = True,anchor_x = 'center',anchor_y = 'center'), back = controls.Sprite(pyglet.resource.image('tbut.png')), bar = controls.Sprite(pyglet.resource.image('progressh.png')), bar_sizerate = (0.05,0.2,0.9,0.6), direction = 0, rate = 1
+	controls.ProgressBar(
+		(window,0,0,1,1,vport,controls.Posattr((0,25),(0,265),(0,150),(0,20))),
+		pyglet.text.Label('%',font_size=14,bold = True,anchor_x = 'center',anchor_y = 'center'),
+		back = controls.Sprite(pyglet.resource.image('tbut.png')), 
+		bar = controls.Sprite(pyglet.resource.image('progressh.png')), bar_sizerate = (0.05,0.2,0.9,0.6), 
+		direction = 0, 
+		rate = 1
+	)
+	,
+	controls.SwitchButton(
+		(window,0,0,1,1,vport,controls.Posattr((0,25),(0,300),(0,150),(0,30))),
+		[
+			pyglet.text.Label('switch0',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center'),
+			pyglet.text.Label('switch1',font_size=16,color = (0,255,0,255),bold = True,anchor_x = 'center',anchor_y = 'center')
+		]
+		,
+		[
+			controls.Sprite(pyglet.resource.image('tbut.png')),
+			controls.Sprite(pyglet.resource.image('walk.gif'))
+		]
+		,
+		[
+			controls.Sprite(pyglet.resource.image('tico.png'))
+		]
+	)
+	,
+	controls.ButtonSlider(
+		(window,25,340,150,30,vport,controls.Posattr((0,25),(0,340),(0,150),(0,30))),
+		back = controls.Sprite(pyglet.resource.image('bslider.png'))
+	)
+	,
+	controls.MessageInteractor(
+		(window,0,0,800,600,vport,controls.Posattr((0,200),(0,30),(0,250),(0,250))),
+		back = controls.Sprite(pyglet.resource.image('tbut.png')),
+		front = controls.Sprite(pyglet.resource.image('tframe.png'))
+	)
+	,
+	controls.Label(
+		(window,0,0,1,1,vport,controls.Posattr((0.5,0),(0.8,0),(0,0),(0,0))),
+		pyglet.text.Label(
+		'SSSSSS',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center')
+	)
+	,
+	controls.SpriteControl(
+		(window,0,0,1,1,vport,controls.Posattr((0.6,0),(0.8,0),(0.1,0),(0.1,0))),
+		controls.Sprite(pyglet.resource.image('bslider.png'))
 	)
 ]
+		
 # for i in range(0,1000):
 	# # root.sons = root.sons[:3]
 	# while(len(root.sons)>3):
@@ -60,12 +121,44 @@ qwq''',
 		# image = pyglet.sprite.Sprite(pyglet.resource.image('tbut.png')),
 		# icon = pyglet.sprite.Sprite(pyglet.resource.image('tico.png'))))
 
-button1,txtbox1,prog = vport.sons
+button1,txtbox1,prog,sbutton0,slider0,msg,lbl,img = vport.sons
+slider0.buttons = [
+	controls.SwitchButton(
+		(window,0,0,1,1,slider0,controls.Posattr((0.05+0.16*i,0),(0.15,0),(0.14,0),(0.7,0))),
+		images = [
+			controls.Sprite(pyglet.resource.image('sliderf0.png')),
+			controls.Sprite(pyglet.resource.image('sliderf1.png'))
+		]
+	)
+	for i in range(5)
+]
+msg.sons = [
+	controls.Button(
+		(window,25,15,150,30,root,controls.Posattr((0,50),(0,30),(0,150),(0,30))),
+		pyglet.text.Label('提交',font_name='微软雅黑',font_size=16,anchor_x = 'center',anchor_y = 'center'),
+		controls.Sprite(pyglet.resource.image('tbut.png')),
+		controls.Sprite(pyglet.resource.image('tico.png'))
+	)
+	,
+	controls.TextBox(
+		(window,0,0,1,1,vport,controls.Posattr((0,50),(0,65),(0,150),(0,150))),
+		'''写在这里的文字会提交到左侧''',
+		{'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'},
+		editable = True,multiline = True,
+		back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
+	)
+]
+submitb,intertxt = msg.sons
+msg.submit_key = (submitb, 'on_press')
 # button1.label.text = '111'
 # print(button1.text)
 # button1.text = '11'
 def onp():
 	print('pressed button 0')
+	if button0.text == '隐藏其它':
+		button0.text = '显示其它'
+	else:
+		button0.text = '隐藏其它'
 	if button1.visible:
 		button1.hide()
 	else:
@@ -90,9 +183,24 @@ def onp1():
 	# button1.text = '11'
 	prog.rate = (prog.rate + 0.1 - (prog.rate + 0.1)// 1)
 	prog.text = '%.1f%%' % (prog.rate*100)
+
+def onps():
+	print('pressed sbutton switch')
+	sbutton0.stage ^= 1
+
+def onschange(val):
+	print('slider changed:new val = %s' % val)
+	
+def onsubmit():
+	print('submitted')
+	msg.hide()
+	txtbox1.text = intertxt.text
 	
 button0.on_press = onp
 button1.on_press = onp1
+sbutton0.on_press = onps
+slider0.on_change = onschange
+msg.on_submit = onsubmit
 
 window.show()
 pyglet.app.run()
