@@ -241,8 +241,12 @@ class TextBox(Control):
 	
 	# layout:文本
 	# caret:光标(文本的)
-	def __init__(self, control, text, style, editable = False, multiline = False, back = None, padding = 0, select_backcolor = None, select_textcolor = None, caret_color = None):
+	def __init__(self, control, text = None, style = None, editable = False, multiline = False, back = None, padding = 0, select_backcolor = None, select_textcolor = None, caret_color = None):
 		super(TextBox, self).__init__(*control)
+		if text is None:
+			text = ''
+		if style is None:
+			style = {}
 		self.doc = pyglet.text.document.UnformattedDocument(text)
 		self.doc.set_style(0, len(self.doc.text), style)
 		self.editable = editable
@@ -281,6 +285,33 @@ class TextBox(Control):
 		super(TextBox, self).on_mouse_press(x, y, button, modifiers)
 		if self.window is not None and self.caret is not None:
 			self.window.push_handlers(self.caret)
+
+class FormattedTextBox(TextBox):
+	def __init__(self, control, doc = None, editable = False, multiline = False, back = None, padding = 0, select_backcolor = None, select_textcolor = None, caret_color = None):
+		super(TextBox, self).__init__(*control)
+		self.editable = editable
+		self.back = back
+		self.padding = padding
+		self.multiline = multiline
+		self.layout = None
+		self.doc = doc
+		self.layout.x = self.x + padding
+		self.layout.y = self.y + padding
+		
+		if select_backcolor is not None:
+			self.layout.selection_background_color = select_backcolor
+		if select_textcolor is not None:
+			self.layout.selection_color = select_textcolor
+		self.caret = None
+		if self.editable:
+			self.caret = Caret(self.layout,color = (caret_color if caret_color is not None else (0,0,0)))
+		self.on_resize()
+	def set_doc(self, doc):
+		self._doc = doc
+		if doc is not None:
+			self.layout = pyglet.text.layout.IncrementalTextLayout(
+			self.doc, self.width-self.padding*2, self.height-self.padding*2, self.multiline)
+	doc = property(lambda self:self._doc,set_doc)
 
 # 进度条
 class ProgressBar(Control):
@@ -348,7 +379,7 @@ class Slider(Control):
 	def on_resize(self):
 		super(Slider, self).on_resize()
 		if self.image is not None:
-			self.image.update(x = self.x, y = self.y, scale_x = self.width / self.image.t_width)
+			self.image.update(x = self.x, y = self.y + self.height/2 - self.image.t_height/2, scale_x = self.width / self.image.t_width)
 		if self.cursor is not None:
 			k = self.height / self.cursor.t_height
 			self.cursor.update(x = self.x + self.rate*(self.width - k * self.cursor.t_width), y = self.y, scale = k)
@@ -377,6 +408,26 @@ Slider.register_event_type('on_begin_scroll')
 Slider.register_event_type('on_end_scroll')
 Slider.register_event_type('on_change')
 	
+# 垂直滚动条
+class ScrollBar(Slider):
+	def on_resize(self):
+		super(Slider, self).on_resize()
+		if self.image is not None:
+			self.image.update(x = self.x + self.width/2 - self.image.t_width/2, y = self.y, scale_y = self.height / self.image.t_height)
+		if self.cursor is not None:
+			k = self.width / self.cursor.t_width
+			self.cursor.update(x = self.x, y = self.y + (1-self.rate)*(self.height - k * self.cursor.t_height), scale = k)
+	def on_mouse_press(self, x, y, button, modifiers):
+		# print('got mouse press')
+		super(Slider, self).on_mouse_press(x, y, button, modifiers)
+		self.rate = 1-(y-self.y-self.cursor.height/2)/max(1,self.height-self.cursor.height)
+		self.capture_events()
+		self.dispatch_event('on_begin_scroll')
+		self.dispatch_event('on_change', self.rate)
+	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+		self.rate = 1-(y-self.y-self.cursor.height/2)/max(1,self.height-self.cursor.height)
+		self.dispatch_event('on_change', self.rate)
+
 # 框架（控件组及布局容器）
 class Frame(Control):
 	def __init__(self, control):
@@ -426,6 +477,50 @@ class ImageFrame(Frame):
 			self.back.update(x = self.x, y = self.y, scale_x = self.width / self.back.t_width , scale_y = self.height / self.back.t_height)
 		if self.front is not None:
 			self.front.update(x = self.x, y = self.y, scale_x = self.width / self.front.t_width , scale_y = self.height / self.front.t_height)
+
+def ScrollTextBox_defaultlayout(self):
+	SCROLL_BAR_WIDTH = 20
+	if self.scrollbar is not None:
+		self.scrollbar.pos = Posattr((1,-SCROLL_BAR_WIDTH),(0,0),(0,SCROLL_BAR_WIDTH),(1,0))
+	if self.doc is not None:
+		self.doc.pos = Posattr((0,0),(0,0),(1,-SCROLL_BAR_WIDTH),(1,0))
+class ScrollTextBox(LayoutFrame):
+	def __init__(self, control, doc = None, scrollbar = None, layouter = ScrollTextBox_defaultlayout):
+		super(ScrollTextBox, self).__init__(control)
+		self._layouter = layouter
+		self._doc = doc
+		self._scrollbar = scrollbar
+		self.doc = doc
+		self.scrollbar = scrollbar
+		self.layouter = layouter
+		self.on_resize()
+	iskey = lambda self, x: x is self.scrollbar or x is self.doc
+	def set_text(self,x):
+		if self.doc is not None:
+			self.doc.text = x
+	text = property(lambda self:self.doc.text if self.doc is not None else None,set_text)
+	def set_doc(self,doc):
+		self._doc = doc
+		if doc is not None and doc not in self.sons:
+			self.sons.append(doc)
+		self.sons = list(filter(self.iskey,self.sons))
+		self.relayout()
+	doc = property(lambda self:self._doc, set_doc)
+	def set_scrollbar(self,scrollbar):
+		self._scrollbar = scrollbar
+		if scrollbar is not None:
+			if scrollbar not in self.sons:
+				self.sons.append(scrollbar)
+			if self.doc is not None and self.doc.layout is not None:
+				def f(event):
+					def g(*args, **kw):
+						self.doc.layout.ensure_line_visible(min(max(int(args[0]*self.doc.layout.get_line_count()),0),self.doc.layout.get_line_count()-1))
+						return event(*args, **kw)
+					return g
+				self.scrollbar.on_change = f(self.scrollbar.on_change)
+		self.sons = list(filter(self.iskey,self.sons))
+		self.relayout()
+	scrollbar = property(lambda self:self._scrollbar,set_scrollbar)
 
 def ButtonSlider_defaultlayout(self):
 	PADDING_RATE = 0.2
@@ -494,36 +589,59 @@ def AlertBox_defaultlayout(self):
 	PADDING = 20
 	TITLE_PADDING = 20
 	TITLE_HEIGHT = 30
-	self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
+	if self.title is not None:
+		self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
 	cur_h = PADDING
-	self.button.pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
+	if self.button is not None:
+		self.button.pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
 	cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
-	self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
+	if self.doc is not None:
+		self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
 class AlertBox(MessageInteractor, LayoutFrame):
-	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), button = Button(()), layouter = AlertBox_defaultlayout):
+	def __init__(self, control, back = None, front = None, title = Label(()),  doc = None, button = None, layouter = AlertBox_defaultlayout):
 		super(AlertBox, self).__init__(control, back, front)
 		self._layouter = layouter
+		self._title = None
+		self._doc = None
+		self._button = None
 		self.title = title
 		self.doc = doc
-		self.sons.append(title)
-		self.sons.append(doc)
 		self.button = button
 		self.relayout()
 		self.on_resize()
 	# 注意：请不要多次设置button，否则可能导致on_submit事件触发多次
+	iskey = lambda self, x: x is self.title or x is self.doc or x is self.button
 	def set_button(self, button):
 		self._button = button
-		self.sons = self.sons[:2]
-		self.sons.append(button)
-		self.submit_key = (button, 'on_press')
+		if button is not None:
+			if button not in self.sons:
+				self.sons.append(button)
+			self.submit_key = (button, 'on_press')
+		self.sons = list(filter(self.iskey,self.sons))
 		self.relayout()
 	button = property(lambda self:self._button, set_button)
 	def set_text(self,x):
-		self.doc.text = x
-	text = property(lambda self:self.doc.text,set_text)
+		if self.doc is not None:
+			self.doc.text = x
+	text = property(lambda self:self.doc.text if self.doc is not None else None,set_text)
 	def set_title_text(self,x):
-		self.title.text = x
-	title_text = property(lambda self:self.title.text,set_title_text)
+		if self.title is not None:
+			self.title.text = x
+	title_text = property(lambda self:self.title.text if self.title is not None else None,set_title_text)
+	def set_title(self,title):
+		self._title = title
+		if title is not None and title not in self.sons:
+			self.sons.append(title)
+		self.sons = list(filter(self.iskey,self.sons))
+		self.relayout()
+	title = property(lambda self:self._title, set_title)
+	def set_doc(self,doc):
+		self._doc = doc
+		if doc is not None and doc not in self.sons:
+			self.sons.append(doc)
+		self.sons = list(filter(self.iskey,self.sons))
+		self.relayout()
+	doc = property(lambda self:self._doc, set_doc)
 
 def MessageBox_defaultlayout(self):
 	BUTTON_HEIGHT = 30
@@ -531,48 +649,71 @@ def MessageBox_defaultlayout(self):
 	PADDING = 20
 	TITLE_PADDING = 20
 	TITLE_HEIGHT = 30
-	self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
+	if self.title is not None:
+		self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
 	cur_h = PADDING
-	for i in range(len(self.buttons)):
-		self.buttons[i].pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
-		cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
-	self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
+	if self.buttons is not None:
+		for i in range(len(self.buttons)):
+			self.buttons[i].pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
+			cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
+	if self.doc is not None:
+		self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
 # 提示选择框（含交互）
 class MessageBox(MessageInteractor, LayoutFrame):
-	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), buttons = None, layouter = MessageBox_defaultlayout):
+	def __init__(self, control, back = None, front = None, title = None,  doc = None, buttons = None, layouter = MessageBox_defaultlayout):
 		super(MessageBox, self).__init__(control, back, front)
 		self._layouter = layouter
+		self._title = None
+		self._doc = None
+		self._buttons = None
 		self.title = title
 		self.doc = doc
-		self.sons.append(title)
-		self.sons.append(doc)
 		self.buttons = buttons if buttons is not None else []
-		self.relayout()
 		self.on_resize()
 		self.result = 0
 	# 注意：请不要多次设置buttons，否则可能导致on_submit事件触发多次
+	iskey = lambda self, x: x is self.title or x is self.doc or x in self.buttons
 	def set_buttons(self, buttons):
 		self._buttons = buttons
-		self.sons = self.sons[:2]
-		self.sons += buttons
+		for button in buttons:
+			if button not in self.sons:
+				self.sons.append(button)
+		self.sons = list(filter(self.iskey,self.sons))
 		def f(event, id):
 			def g(*args, **kw):
 				self.result = id
 				self.dispatch_event('on_submit', self.result)
 				return event(*args, **kw)
 			return g
-		for i in range(len(buttons)):
-			buttons[i].on_press = f(buttons[i].on_press, i)
+		if buttons is not None:
+			for i in range(len(buttons)):
+				buttons[i].on_press = f(buttons[i].on_press, i)
 		self.relayout()
 	buttons = property(lambda self:self._buttons, set_buttons)
 	def set_text(self,x):
-		self.doc.text = x
-	text = property(lambda self:self.doc.text,set_text)
+		if self.doc is not None:
+			self.doc.text = x
+	text = property(lambda self:self.doc.text if self.doc is not None else None,set_text)
 	def set_title_text(self,x):
-		self.title.text = x
-	title_text = property(lambda self:self.title.text,set_title_text)
+		if self.title is not None:
+			self.title.text = x
+	title_text = property(lambda self:self.title.text if self.title is not None else None,set_title_text)
+	def set_title(self,title):
+		self._title = title
+		if title is not None and title not in self.sons:
+			self.sons.append(title)
+		self.sons = list(filter(self.iskey,self.sons))
+		self.relayout()
+	title = property(lambda self:self._title, set_title)
+	def set_doc(self,doc):
+		self._doc = doc
+		if doc is not None and doc not in self.sons:
+			self.sons.append(doc)
+		self.sons = list(filter(self.iskey,self.sons))
+		self.relayout()
+	doc = property(lambda self:self._doc, set_doc)
 	def on_submit(self, result):
-		# print('on_submit:%d' % result)
+		# print(result)
 		self.hide()
 
 # 提示输入框（含交互）
@@ -636,7 +777,6 @@ class TagPages(LayoutFrame):
 		super(TagPages, self).__init__(control)
 		self._layouter = layouter
 		self.pages = pages if pages is not None else []
-		self.page = 0
 	def set_pages(self, pages):
 		# print('set_buttons')
 		self._pages = pages
@@ -649,6 +789,7 @@ class TagPages(LayoutFrame):
 			pages[i][0].on_press = g(i)
 			self.sons += pages[i]
 		self.relayout()
+		self.page = 0
 	pages = property(lambda self:self._pages,set_pages)
 	def set_page(self, page):
 		self._page = page
@@ -670,8 +811,7 @@ class TagPages(LayoutFrame):
 	def on_switch(self, page):
 		# print('on switch:%d' % page)
 		pass
-
-ButtonSlider.register_event_type('on_switch')
+TagPages.register_event_type('on_switch')
 
 # 科技树
 # 也许不应该放在这里 ……
