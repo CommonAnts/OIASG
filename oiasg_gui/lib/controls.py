@@ -184,6 +184,7 @@ class Button(Control):
 		# print('got mouse press')
 		super(Button, self).on_mouse_press(x, y, button, modifiers)
 		self.capture_events()
+		self.dispatch_event('on_click')
 		self.charged = True
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		# print('got mouse drag')
@@ -197,6 +198,7 @@ class Button(Control):
 	def on_press(self):
 		pass
 # on_press:从按钮松开时触发事件
+Button.register_event_type('on_click')
 Button.register_event_type('on_press')
 
 # 多外观按钮
@@ -294,8 +296,7 @@ class ProgressBar(Control):
 		self.bar = bar
 		self.bar_sizerate = bar_sizerate
 		self.direction = direction
-		self.set_rate(rate)
-		self.on_resize()
+		self.rate = rate
 	def set_rate(self, x):
 		self._rate = x
 		self.on_resize()
@@ -328,6 +329,54 @@ class ProgressBar(Control):
 		self._draw(self.bar)
 		self._draw(self.label)
 
+# 水平滚动条	
+class Slider(Control):
+	# image:背景图片(Sprite类型)
+	# cursor:游标(Sprite类型)
+	
+	# 游标于按下到松开之间获取事件控制句柄
+	def __init__(self, control, image = None, cursor = None, rate = 1):
+		super(Slider, self).__init__(*control)
+		self.image = image
+		self.cursor = cursor
+		self.rate = rate
+	def set_rate(self, x):
+		x = max(0,min(x,1))
+		self._rate = x
+		self.on_resize()
+	rate = property(lambda self:self._rate,set_rate)
+	def on_resize(self):
+		super(Slider, self).on_resize()
+		if self.image is not None:
+			self.image.update(x = self.x, y = self.y, scale_x = self.width / self.image.t_width)
+		if self.cursor is not None:
+			k = self.height / self.cursor.t_height
+			self.cursor.update(x = self.x + self.rate*(self.width - k * self.cursor.t_width), y = self.y, scale = k)
+	def draw(self):
+		super(Slider, self).draw()
+		self._draw(self.image)
+		self._draw(self.cursor)
+	def on_mouse_press(self, x, y, button, modifiers):
+		# print('got mouse press')
+		super(Slider, self).on_mouse_press(x, y, button, modifiers)
+		self.rate = (x-self.x-self.cursor.width/2)/max(1,self.width-self.cursor.width)
+		self.capture_events()
+		self.dispatch_event('on_begin_scroll')
+		self.dispatch_event('on_change', self.rate)
+	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+		self.rate = (x-self.x-self.cursor.width/2)/max(1,self.width-self.cursor.width)
+		self.dispatch_event('on_change', self.rate)
+	def on_mouse_release(self, x, y, button, modifiers):
+		self.release_events()
+		self.dispatch_event('on_end_scroll')
+	def on_change(self,val):
+		# print(val)
+		pass
+
+Slider.register_event_type('on_begin_scroll')
+Slider.register_event_type('on_end_scroll')
+Slider.register_event_type('on_change')
+	
 # 框架（控件组及布局容器）
 class Frame(Control):
 	def __init__(self, control):
@@ -546,21 +595,90 @@ class MessageInput(AlertBox):
 	submit_key = property(lambda self:self._submit_key,set_submit_key_event)
 
 def MessagePage_defaultlayout(self):
-	pass
-# 事件页面（含过场动画、背景音乐及按钮交互）
+	return MessageBox_defaultlayout(self)
+	# 待填
+
+# 事件页面
+# 布局待设计 ……
 class MessagePage(MessageBox):
-	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), buttons = None, layouter = MessagePage_defaultlayout, CG = None, BGM = None):
+	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), buttons = None, layouter = MessagePage_defaultlayout):
 		super(MessagePage, self).__init__(control, back, front, title, doc, buttons, layouter)
 
-# 科技树
-class TechTree(ImageFrame):
-	class TechTreeNode(object):
-		pass
-	pass
+def TagPages_defaultlayoutV(self):
+	TAG_WIDTH = 90
+	TAG_PADDING = 5
+	tag_c = TAG_PADDING*(len(self.pages)+1)/max(1,len(self.pages))
+	tag_k = 1/max(1,len(self.pages))
+	cur_k = 0
+	cur_h = TAG_PADDING
+	for i in range(len(self.pages)):
+		self.pages[i][0].pos = Posattr((0,0),(cur_k,cur_h),(0,TAG_WIDTH),(tag_k,-tag_c))
+		cur_k += tag_k
+		cur_h += - tag_c + TAG_PADDING
+		self.pages[i][1].pos = Posattr((0,TAG_WIDTH),(0,0),(1,-TAG_WIDTH),(1,0))
+
+def TagPages_defaultlayoutH(self):
+	TAG_HEIGHT = 30
+	TAG_PADDING = 5
+	tag_c = TAG_PADDING*(len(self.pages)+1)/max(1,len(self.pages))
+	tag_k = 1/max(1,len(self.pages))
+	cur_k = 0
+	cur_w = TAG_PADDING
+	for i in range(len(self.pages)):
+		self.pages[i][0].pos = Posattr((cur_k,cur_w),(1,-TAG_HEIGHT),(tag_k,-tag_c),(0,TAG_HEIGHT))
+		cur_k += tag_k
+		cur_w += - tag_c + TAG_PADDING
+		self.pages[i][1].pos = Posattr((0,0),(0,0),(1,0),(1,-TAG_HEIGHT))
 
 # 带标签的页面
-class TagPages(ImageFrame):
-	pass
+class TagPages(LayoutFrame):
+	def __init__(self, control, pages = None, layouter = TagPages_defaultlayoutV):
+		super(TagPages, self).__init__(control)
+		self._layouter = layouter
+		self.pages = pages if pages is not None else []
+		self.page = 0
+	def set_pages(self, pages):
+		# print('set_buttons')
+		self._pages = pages
+		self.sons = []
+		for i in range(len(pages)):
+			def g(i):
+				def f():
+					self.page = i
+				return f
+			pages[i][0].on_press = g(i)
+			self.sons += pages[i]
+		self.relayout()
+	pages = property(lambda self:self._pages,set_pages)
+	def set_page(self, page):
+		self._page = page
+		for i in range(len(self.pages)):
+			if i == page:
+				self.pages[i][0].stage = 1
+				if self.visible:
+					self.pages[i][1].show()
+			else:
+				self.pages[i][0].stage = 0
+				self.pages[i][1].hide()
+		self.dispatch_event('on_switch',self.page)
+	page = property(lambda self:self._page,set_page)
+	def show(self):
+		super(TagPages, self).show()
+		for i in range(len(self.pages)):
+			if i != self.page:
+				self.pages[i][1].hide()
+	def on_switch(self, page):
+		# print('on switch:%d' % page)
+		pass
+
+ButtonSlider.register_event_type('on_switch')
+
+# 科技树
+# 也许不应该放在这里 ……
+# class TechTree(Frame):
+	# class TechTreeNode(object):
+		# pass
+	# pass
 
 class Form(pyglet.window.Window):
 	def __init__(self, width=None, height=None, caption=None, resizable=False, style=None, fullscreen=False, visible=True, vsync=True, display=None, screen=None, config=None, context=None, mode=None):

@@ -64,11 +64,29 @@ qwq''',
 )
 geditbox = lambda:controls.TextBox(
 	[window],
-	'''这是一个多行文本框
+	'''这是一个可编辑的多行文本框
 qwq''',
 	{'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'},
 	editable = True,multiline = True,
 	back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
+)
+gsbutton = lambda:controls.SwitchButton(
+	(window,0,0,1,1,vport,controls.Posattr((0,25),(0,300),(0,150),(0,30))),
+	[
+		pyglet.text.Label('switch0',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center'),
+		pyglet.text.Label('switch1',font_size=16,color = (0,255,0,255),bold = True,anchor_x = 'center',anchor_y = 'center')
+	]
+	,
+	[
+		controls.Sprite(pyglet.resource.image('tbut.png')),
+		controls.Sprite(pyglet.resource.animation('walk.gif'))
+	]
+	,
+	[
+		controls.Sprite(pyglet.resource.image('tico.png'))
+	]
+	,
+	direction = 1
 )
 vport.sons = [
 	controls.Button(
@@ -95,22 +113,7 @@ qwq''',
 		rate = 1
 	)
 	,
-	controls.SwitchButton(
-		(window,0,0,1,1,vport,controls.Posattr((0,25),(0,300),(0,150),(0,30))),
-		[
-			pyglet.text.Label('switch0',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center'),
-			pyglet.text.Label('switch1',font_size=16,color = (0,255,0,255),bold = True,anchor_x = 'center',anchor_y = 'center')
-		]
-		,
-		[
-			controls.Sprite(pyglet.resource.image('tbut.png')),
-			controls.Sprite(pyglet.resource.image('walk.gif'))
-		]
-		,
-		[
-			controls.Sprite(pyglet.resource.image('tico.png'))
-		]
-	)
+	gsbutton()
 	,
 	controls.ButtonSlider(
 		(window,25,340,150,30,vport,controls.Posattr((0,25),(0,340),(0,150),(0,30))),
@@ -156,6 +159,17 @@ qwq''',
 		doc = geditbox(),
 		button = gbutton()
 	)
+	,
+	controls.Slider(
+		(window,25,380,150,30,vport,controls.Posattr((0,25),(0,380),(0,150),(0,30))),
+		image = controls.Sprite(pyglet.resource.image('bslider.png')),
+		cursor = controls.Sprite(pyglet.resource.image('sliderf1.png'))
+	)
+	,
+	controls.TagPages(
+		(window,0,0,800,600,vport,controls.Posattr((0,750),(0,200),(0,250),(0,200))),
+		layouter = controls.TagPages_defaultlayoutH
+	)
 ]
 		
 # for i in range(0,1000):
@@ -170,8 +184,15 @@ qwq''',
 		# image = pyglet.sprite.Sprite(pyglet.resource.image('tbut.png')),
 		# icon = pyglet.sprite.Sprite(pyglet.resource.image('tico.png'))))
 
-button1,txtbox1,prog,sbutton0,slider0,msg,lbl,img,msg1,alrt,inp = vport.sons
+button1,txtbox1,prog,sbutton0,slider0,msg,lbl,img,msg1,alrt,inp,sld0,tagp = vport.sons
 
+tagp.pages = [
+	(gsbutton(),gtxtbox()),
+	(gsbutton(),geditbox()),
+	(gsbutton(),gbutton()),
+	(gsbutton(),gsbutton()),
+	(gsbutton(),gtxtbox())
+]
 slider0.buttons = [
 	controls.SwitchButton(
 		(window,0,0,1,1,slider0),
@@ -206,13 +227,24 @@ msg1.buttons = [gbutton(),gbutton(),gbutton()]
 # print(button1.text)
 # button1.text = '11'
 BALL_SOUND = pyglet.resource.media('ball.wav', streaming=False)
+BGM = pyglet.resource.media('bgm.mp3', streaming=False)
+bgm_player = BGM.play()
+	
+# def lop():
+	# print('23')
+	# bgm_player.queue(BGM)
+	# bgm_player.next_source()
+# bgm_player.on_source_group_eos = lop
+
 def onp():
 	print('pressed button 0')
 	BALL_SOUND.play()
 	if button0.text == '隐藏其它':
 		button0.text = '显示其它'
+		bgm_player.pause()
 	else:
 		button0.text = '隐藏其它'
+		bgm_player.play()
 	if button1.visible:
 		button1.hide()
 	else:
