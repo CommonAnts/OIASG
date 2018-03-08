@@ -8,12 +8,18 @@ import time
 import pyglet
 from lib import *
 
-pyglet.clock.set_fps_limit(60)
+# pyglet.clock.set_default(pyglet.clock.Clock())
+fps_display = pyglet.clock.ClockDisplay()
 
 pyglet.resource.path = ['resource']
 
 window = controls.Form(800,600,resizable = True)
 root = window.root_control
+def on_draw():
+	window.clear()
+	root.draw()
+	fps_display.draw()
+window.on_draw = on_draw
 
 @window.event
 def on_resize(width, height):
@@ -62,11 +68,14 @@ qwq''',
 	editable = False,multiline = True,
 	back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
 )
-geditbox = lambda:controls.TextBox(
+def gdoc():
+	doc = pyglet.text.document.FormattedDocument('''这是一个可编辑的多行文本框
+qwq''')
+	doc.set_style(0, len(doc.text)-4, {'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'})
+	return doc
+geditbox = lambda:controls.FormattedTextBox(
 	[window],
-	'''这是一个可编辑的多行文本框
-qwq''',
-	{'color':(0, 0, 200, 255),'font_name':'仿宋','font_size':14,'line_spacing':24,'wrap':'char'},
+	gdoc(),
 	editable = True,multiline = True,
 	back = controls.Sprite(pyglet.resource.animation('walk.gif')),select_backcolor = (0, 0, 200, 127)
 )
@@ -87,6 +96,11 @@ gsbutton = lambda:controls.SwitchButton(
 	]
 	,
 	direction = 1
+)
+gscrollbar = lambda:controls.ScrollBar(
+	(window,25,380,150,30,vport,controls.Posattr((0,25),(0,380),(0,20),(0,120))),
+	image = controls.Sprite(pyglet.resource.image('scroll.png')),
+	cursor = controls.Sprite(pyglet.resource.image('sliderf1.png'))
 )
 vport.sons = [
 	controls.Button(
@@ -160,34 +174,18 @@ qwq''',
 		button = gbutton()
 	)
 	,
-	controls.Slider(
-		(window,25,380,150,30,vport,controls.Posattr((0,25),(0,380),(0,150),(0,30))),
-		image = controls.Sprite(pyglet.resource.image('bslider.png')),
-		cursor = controls.Sprite(pyglet.resource.image('sliderf1.png'))
-	)
+	gscrollbar()
 	,
 	controls.TagPages(
 		(window,0,0,800,600,vport,controls.Posattr((0,750),(0,200),(0,250),(0,200))),
 		layouter = controls.TagPages_defaultlayoutH
 	)
 ]
-		
-# for i in range(0,1000):
-	# # root.sons = root.sons[:3]
-	# while(len(root.sons)>3):
-		# del(root.sons[-1])
-		# root.sons.pop()
-	# for i in range(0,180):
-		# root.sons.append(
-		# controls.Button((window,random.randint(180,window.width),random.randint(0,window.height),random.randint(0,600),random.randint(0,600),root),
-		# pyglet.text.Label('按钮测试',font_size=16,bold = True,anchor_x = 'center',anchor_y = 'center'),
-		# image = pyglet.sprite.Sprite(pyglet.resource.image('tbut.png')),
-		# icon = pyglet.sprite.Sprite(pyglet.resource.image('tico.png'))))
 
 button1,txtbox1,prog,sbutton0,slider0,msg,lbl,img,msg1,alrt,inp,sld0,tagp = vport.sons
 
 tagp.pages = [
-	(gsbutton(),gtxtbox()),
+	(gsbutton(),controls.ScrollTextBox([window],geditbox(),gscrollbar())),
 	(gsbutton(),geditbox()),
 	(gsbutton(),gbutton()),
 	(gsbutton(),gsbutton()),
@@ -261,6 +259,12 @@ def onp():
 		vport.hide()
 	else:
 		vport.show()
+	print(len(alrt.sons))
+	alrt.title = None
+	alrt.doc = None
+	alrt.button = None
+	msg1.doc = None
+	msg1.title = None
 	
 
 def onp1():
