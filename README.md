@@ -14,3 +14,5 @@ OIASG is based on python 3 and [pyglet](http://pyglet.org/).
 We use modified(mainly debugging) pyglet 1.3.1 for windows.You can get the modifications form `/pyglet`.
 
 **The game is chiefly for Windows 10,so it may not work well on other platforms(but this is not normal).**
+
+**Note that pyglet uses AVBin to decode medias.**
