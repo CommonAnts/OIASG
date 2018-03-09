@@ -13,6 +13,7 @@
 	'FULLSCREEN':True,
 	'MOUSE_CURSOR':'cursor.png',
 	'ICON':'icon.ico',
+	'DEFAULT_POS':((0,0),(0,0),(1,0),(1,0)),
 	
 	# 通用声音
 	
@@ -24,9 +25,11 @@
 	
 	'ED_FILE':'test_video2.mp4',
 	
-	# 通用菜单
+	# 通用界面
 	
+	'NORMAL_PAGE_BACK':'back.png',
 	'NORMAL_MENU_BACK':'frame_back.png',
+	'NORMAL_DEFAULT_IMAGE':'default.png',
 	
 	# 通用标题
 	
@@ -48,6 +51,9 @@
 	'NORMAL_BUTTON_BACK':'button_v.png',
 	'NORMAL_BUTTON_PRESSED_BACK':'button_v_pressed.png',
 	
+	'NORMAL_SWITCHBUTTON_BACK':'button_unselect.png',
+	'NORMAL_SWITCHBUTTON_SELECT_BACK':'button_select.png',
+	
 	# 通用标签
 	
 	'NORMAL_LABEL_FONT':'杨任东竹石体-Regular',
@@ -68,12 +74,35 @@
 	'NORMAL_SLIDER_BACK':'slider_back.png',
 	'NORMAL_SLIDER_CURSOR':'slider_cursor.png',
 	
+	# 通用滚动条
+	
+	'NORMAL_SCROLLBAR_BACK':'scroll_back.png',
+	'NORMAL_SCROLLBAR_CURSOR':'scroll_cursor.png',
+	
 	# 确认退出窗口
 	
 	'CONFIRM_QUIT_POS':((0.5,-118),(0.5,-79),(0,236),(0,158)),
 	'CONFIRM_QUIT_TEXT':'确认退出吗？',
 	'CONFIRM_QUIT_YES_TEXT':'是',
 	'CONFIRM_QUIT_NO_TEXT':'否',
+	
+	# 附录界面
+	
+	'APPENDICE_PAGE_TITLE':'图鉴',
+	'APPENDICE_PAGE_TITLE_POS':((0.5,-210),(1,-50),(0,0),(0,0)),
+	
+	'APPENDICE_PAGE_CONFIRM_TEXT':'返回',
+	'APPENDICE_PAGE_CONFIRM_POS':((0,20),(1,-50),(0,150),(0,30)),
+	
+	'APPENDICE_PAGE_INFO_POS':((0,20),(0,20),(1,-400),(1,-120)),
+	'APPENDICE_PAGE_SELECT_POS':((1,-360),(0,20),(0,340),(1,-40)),
+	
+	'APPENDICE_PAGE_INFO_ICON_POS':((0,20),(0,80),(0,320),(1,-100)),
+	'APPENDICE_PAGE_INFO_LABEL_POS':((0,170),(0,40),(0,0),(0,0)),
+	'APPENDICE_PAGE_INFO_TEXT_POS':((0,360),(0,20),(1,-380),(1,-40)),
+	
+	'APPENDICE_PAGE_SELECT_SCROLL_POS':((1,-40),(0,20),(0,20),(1,-40)),
+	'APPENDICE_PAGE_SELECT_LIST_POS':((0,20),(0,20),(1,-70),(1,-40)),
 	
 	# 设置窗口
 	
@@ -93,8 +122,8 @@
 	'SETTING_MENU_VOLUME_MUSIC_POS':((0,116),(0,0),(1,-136),(0,40)),
 	'SETTING_MENU_VOLUME_MUSIC_LABEL_POS':((0,20),(0,0),(0,0),(0,40)),
 	'SETTING_MENU_VOLUME_EFFECT_TEXT':'音效',
-	'SETTING_MENU_VOLUME_EFFECT_POS':((0,116),(1/2,-40),(1,-136),(0,40)),
-	'SETTING_MENU_VOLUME_EFFECT_LABEL_POS':((0,20),(1/2,-40),(0,0),(0,40)),
+	'SETTING_MENU_VOLUME_EFFECT_POS':((0,116),(0.5,-40),(1,-136),(0,40)),
+	'SETTING_MENU_VOLUME_EFFECT_LABEL_POS':((0,20),(0.5,-40),(0,0),(0,40)),
 	'SETTING_MENU_VOLUME_GAME_TEXT':'游戏音',
 	'SETTING_MENU_VOLUME_GAME_POS':((0,116),(1,-80),(1,-136),(0,40)),
 	'SETTING_MENU_VOLUME_GAME_LABEL_POS':((0,20),(1,-80),(0,0),(0,40)),
@@ -151,7 +180,7 @@
 	'MAIN_MENU_ACHIEVEMENT_TEXT':'成就',
 	
 	'MAIN_MENU_APPENDICE_POS':((1,-260),(0.31,-48),(0,96),(0,48)),
-	'MAIN_MENU_APPENDICE_TEXT':'附录',
+	'MAIN_MENU_APPENDICE_TEXT':'图鉴',
 	
 	'MAIN_MENU_SETTING_POS':((1,-200),(0.25,-48),(0,96),(0,48)),
 	'MAIN_MENU_SETTING_TEXT':'设置',

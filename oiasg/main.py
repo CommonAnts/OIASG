@@ -87,6 +87,10 @@ class GameObject(object):
 			root.height = height
 			root.on_resize()
 		
+		@window.event
+		def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
+			pass
+		
 		pages = MultiPage((window,root))
 		
 		root.sons.append(pages)
@@ -104,39 +108,65 @@ class GameObject(object):
 		normal_button_back = pyglet.resource.image(NORMAL_BUTTON_BACK)
 		normal_button_pressed_back = pyglet.resource.image(NORMAL_BUTTON_PRESSED_BACK)
 		normal_menu_back = pyglet.resource.image(NORMAL_MENU_BACK)
+		normal_page_back = pyglet.resource.image(NORMAL_PAGE_BACK)
+		normal_default_image = pyglet.resource.image(NORMAL_DEFAULT_IMAGE)
 		normal_slider_back = pyglet.resource.image(NORMAL_SLIDER_BACK)
 		normal_slider_cursor = pyglet.resource.image(NORMAL_SLIDER_CURSOR)
 		normal_checkbox_unchecked_back = pyglet.resource.image(NORMAL_CHECKBOX_UNCHECKED_BACK)
 		normal_checkbox_checked_back = pyglet.resource.image(NORMAL_CHECKBOX_CHECKED_BACK)
+		normal_scrollbar_back = pyglet.resource.image(NORMAL_SCROLLBAR_BACK)
+		normal_scrollbar_cursor = pyglet.resource.image(NORMAL_SCROLLBAR_CURSOR)
+		normal_switchbutton_back = pyglet.resource.image(NORMAL_SWITCHBUTTON_BACK)
+		normal_switchbutton_select_back = pyglet.resource.image(NORMAL_SWITCHBUTTON_SELECT_BACK)
 		
-		normal_title_gen = lambda parent,text,pos = ((0,0),(0,0),(1,0),(1,0)):Label((window,parent,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE_FONT,font_size = NORMAL_TITLE_FONT_SIZE,color = NORMAL_TITLE_COLOR, anchor_x = 'center',anchor_y = 'center'))
+		normal_title_gen = lambda parent,text,pos = DEFAULT_POS:Label((window,parent,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE_FONT,font_size = NORMAL_TITLE_FONT_SIZE,color = NORMAL_TITLE_COLOR, anchor_x = 'center',anchor_y = 'center'))
 		
-		normal_title2_gen = lambda parent,text,pos = ((0,0),(0,0),(1,0),(1,0)):Label((window,parent,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE2_FONT,font_size = NORMAL_TITLE2_FONT_SIZE,color = NORMAL_TITLE2_COLOR, anchor_x = 'center',anchor_y = 'center'))
+		normal_title2_gen = lambda parent,text,pos = DEFAULT_POS:Label((window,parent,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE2_FONT,font_size = NORMAL_TITLE2_FONT_SIZE,color = NORMAL_TITLE2_COLOR, anchor_x = 'center',anchor_y = 'center'))
 		
-		normal_label_gen = lambda parent,text,pos = ((0,0),(0,0),(1,0),(1,0)):Label((window,parent,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_LABEL_FONT,font_size = NORMAL_LABEL_FONT_SIZE,color = NORMAL_LABEL_COLOR, anchor_x = 'left',anchor_y = 'center'))
+		normal_label_gen = lambda parent,text,pos = DEFAULT_POS:Label((window,parent,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_LABEL_FONT,font_size = NORMAL_LABEL_FONT_SIZE,color = NORMAL_LABEL_COLOR, anchor_x = 'left',anchor_y = 'center'))
 		
-		normal_message_text_gen = lambda parent,text,pos = ((0,0),(0,0),(1,0),(1,0)):TextBox((window,parent,Posattr(*pos)),text,NORMAL_MESSAGE_TEXT_STYLE,multiline = True)
+		normal_message_text_gen = lambda parent,text,pos = DEFAULT_POS:TextBox((window,parent,Posattr(*pos)),text,NORMAL_MESSAGE_TEXT_STYLE,multiline = True)
 		
-		normal_button_gen = lambda parent,labeltext,pos = ((0,0),(0,0),(1,0),(1,0)):Button(
+		normal_button_gen = lambda parent,labeltext,pos = DEFAULT_POS:Button(
 			(window,parent,Posattr(*pos)),
 			label = pyglet.text.Label(labeltext,font_name = NORMAL_BUTTON_FONT,font_size = NORMAL_BUTTON_FONT_SIZE,color = NORMAL_BUTTON_COLOR,anchor_x = 'center',anchor_y = 'center'),
 			image = Sprite(normal_button_back),
 			pressed_image = Sprite(normal_button_pressed_back)
 		)
 		
-		normal_slider_gen = lambda parent,pos = ((0,0),(0,0),(1,0),(1,0)):Slider(
+		normal_slider_gen = lambda parent,pos = DEFAULT_POS:Slider(
 			(window,parent,Posattr(*pos)),
 			image = Sprite(normal_slider_back),
 			cursor = Sprite(normal_slider_cursor)
 		)
 		
-		normal_checkbox_gen = lambda parent,pos = ((0,0),(0,0),(1,0),(1,0)):SwitchButton(
+		normal_checkbox_gen = lambda parent,pos = DEFAULT_POS:SwitchButton(
 			(window,parent,Posattr(*pos)),
 			images = (
 				Sprite(normal_checkbox_unchecked_back),
 				Sprite(normal_checkbox_checked_back)
 			)
 		)
+		
+		normal_formatted_text_gen = lambda parent,text,pos = DEFAULT_POS:FormattedTextBox((window,parent,Posattr(*pos)),pyglet.text.decode_attributed(text),multiline = True)
+		
+		normal_scrollbar_gen = lambda parent,pos = DEFAULT_POS:ScrollBar((window,parent,Posattr(*pos)), image = Sprite(normal_scrollbar_back), cursor = Sprite(normal_scrollbar_cursor))
+		
+		def normal_scrolltext_gen(parent,text,pos = DEFAULT_POS):
+			r = ScrollTextBox((window,parent,Posattr(*pos)))
+			doc = normal_message_text_gen(r,text)
+			scrollbar = normal_scrollbar_gen(r)
+			r.doc = doc
+			r.scrollbar = scrollbar
+			return r
+		
+		def normal_scrollformattedtext_gen(parent,text,pos = DEFAULT_POS):
+			r = ScrollTextBox((window,parent,Posattr(*pos)))
+			doc = normal_formatted_text_gen(r,text)
+			scrollbar = normal_scrollbar_gen(r)
+			r.doc = doc
+			r.scrollbar = scrollbar
+			return r
 		
 		# 视频播放页
 		
@@ -249,7 +279,7 @@ class GameObject(object):
 		about_page_title = normal_title_gen(about_page, ABOUT_PAGE_TITLE)
 		about_page.title = about_page_title
 		
-		about_page_text = FormattedTextBox((window,about_page),pyglet.text.decode_attributed (ABOUT_PAGE_TEXT),multiline = True)
+		about_page_text = normal_formatted_text_gen(about_page,ABOUT_PAGE_TEXT)
 		about_page.doc = about_page_text
 		
 		about_page_confirm = normal_button_gen(about_page, ABOUT_PAGE_CONFIRM_TEXT)
@@ -257,6 +287,7 @@ class GameObject(object):
 		
 		about_page_watch_ed = normal_button_gen(about_page,ABOUT_PAGE_WATCH_ED_TEXT, ABOUT_PAGE_WATCH_ED_POS)
 		about_page.sons.append(about_page_watch_ed)
+		
 		@about_page_watch_ed.event
 		def on_press():
 			hide_not_pages()
@@ -265,12 +296,10 @@ class GameObject(object):
 			media_page.loop = False
 			@media_page.event
 			def on_player_eos():
-				print('debug_eos')
 				media_page.hide()
 				media_page.clear()
 			@media_page.event
 			def on_press(*args,**kw):
-				print('debug_pressed')
 				on_player_eos()
 			media_page.play()
 			media_page.show()
@@ -279,7 +308,37 @@ class GameObject(object):
 		
 		# 附录（图鉴）
 		
-		# appendice_page = 
+		appendice_page = MessageInteractor((window,root),back = Sprite(normal_page_back))
+		
+		appendice_page_title = normal_title_gen(appendice_page,APPENDICE_PAGE_TITLE, APPENDICE_PAGE_TITLE_POS)
+		appendice_page.sons.append(appendice_page_title)
+		
+		appendice_page_confirm = normal_button_gen(appendice_page,APPENDICE_PAGE_CONFIRM_TEXT,APPENDICE_PAGE_CONFIRM_POS)
+		appendice_page.sons.append(appendice_page_confirm)
+		appendice_page.submit_key = (appendice_page_confirm,'on_press')
+		
+		appendice_page_info = ImageFrame((window,appendice_page,Posattr(*APPENDICE_PAGE_INFO_POS)),back = Sprite(normal_menu_back))
+		appendice_page_info_icon = SpriteControl((window,appendice_page_info,Posattr(*APPENDICE_PAGE_INFO_ICON_POS)),None)
+		appendice_page_info_label = normal_title2_gen(appendice_page_info, '',APPENDICE_PAGE_INFO_LABEL_POS)
+		appendice_page_info_text = normal_scrollformattedtext_gen(appendice_page_info,'',APPENDICE_PAGE_INFO_TEXT_POS)
+		appendice_page_info.sons += (appendice_page_info_icon, appendice_page_info_label, appendice_page_info_text)
+		
+		appendice_page.sons.append(appendice_page_info)
+		
+		appendice_page_select = ImageFrame((window,appendice_page,Posattr(*APPENDICE_PAGE_SELECT_POS)),back = Sprite(normal_menu_back))
+		appendice_page_select_scroll = normal_scrollbar_gen(appendice_page_select,APPENDICE_PAGE_SELECT_SCROLL_POS)
+		appendice_page_select_list = Viewport((window,appendice_page_select,Posattr(*APPENDICE_PAGE_SELECT_LIST_POS)))
+		appendice_page_select.sons += (appendice_page_select_list, appendice_page_select_scroll)
+		
+		# def appendice_page_select_list_item_gen(data):
+			# r = SwitchButton(
+				# (window,appendice_page_select_list,Posattr(*APPENDICE_PAGE_SELECT_LIST_ITEM_POS))
+			# )
+			# data['name']
+		
+		appendice_page.sons.append(appendice_page_select)
+		
+		root.sons.append(appendice_page)
 		
 		# 主菜单
 		main_menu = ImageFrame((window,pages),back = Sprite(pyglet.resource.image(MAIN_MENU_BACK)))
@@ -327,6 +386,11 @@ class GameObject(object):
 		main_menu_quit_button = main_menu_button_gen(MAIN_MENU_QUIT_POS,MAIN_MENU_QUIT_TEXT)
 		main_menu_quit_button.draw = main_menu_button_draw(main_menu_quit_button, main_menu_quit_button.draw)
 		main_menu.sons.append(main_menu_quit_button)
+		
+		@main_menu_appendice_button.event
+		def on_press():
+			hide_not_pages()
+			appendice_page.show()
 		
 		@main_menu_setting_button.event
 		def on_press():
