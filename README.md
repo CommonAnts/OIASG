@@ -23,7 +23,7 @@ We use modified(mainly debugging) pyglet 1.3.1 for windows.You can get the modif
 
 2. install pyglet for python3(==1.3.1)
 
-3. if you are using Windows OS(especially Windows 10),cover pyglet library directory(usually at `C:\Users\<Your User Name>\AppData\Local\Programs\Python\Python36\Lib\site-packages\pyglet`) with '/pyglet'.
+3. if you are using Windows OS(especially Windows 10),cover pyglet library directory(usually at `C:\Users\<Your User Name>\AppData\Local\Programs\Python\Python36\Lib\site-packages\pyglet`) with `/pyglet`.
 
 4. install [AVBin 11alpha4](https://github.com/AVbin/AVbin/downloads)
 
