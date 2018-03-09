@@ -25,7 +25,7 @@ We use modified(mainly debugging) pyglet 1.3.1 for windows.You can get the modif
 
 3. if you are using Windows OS(especially Windows 10),cover pyglet library directory(usually at `C:\Users\<Your User Name>\AppData\Local\Programs\Python\Python36\Lib\site-packages\pyglet`) with `/pyglet`.
 
-4. install FFmpeg(>=3.4.2,"shared" version(including libs))
+4. install FFmpeg(==3.4.2,"shared" version(including libs))
 
 5. clone files from `/oiasg`.
 
