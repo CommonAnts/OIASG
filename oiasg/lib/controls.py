@@ -60,6 +60,7 @@ class Control(pyglet.event.EventDispatcher):
 		return True
 	# 显示和隐藏
 	def show(self):
+		self.dispatch_event('on_show')
 		for i in self.sons:
 			i.show()
 		self.visible = True
@@ -70,14 +71,29 @@ class Control(pyglet.event.EventDispatcher):
 	def _draw(self, x):
 		if x is not None:
 			x.draw()
-	def draw(self):
+		return x is not None
+	def draw(self, range = None):
+		if range is None:
+			x, y, width, height = self.x, self.y, self.width, self.height
+		else:
+			x, y, width, height = range
+			x = max(x, self.x)
+			y = max(y, self.y)
+			width = min(width, self.x + self.width - x)
+			height = min(height, self.y + self.height - y)
 		for i in self.sons:
-			if i.visible and i.intersect(self.x,self.y,self.width,self.height):
-				i.draw()
+			if i.visible and i.intersect(x,y,width,height):
+				i.draw((x,y,width,height))
 	def on_mouse_press(self, x, y, button, modifiers):
-		for i in self.sons:
+		for j in range(len(self.sons)-1,-1,-1):
+			i = self.sons[j]
 			if i.visible and i.hit_test(x,y):
 				i.on_mouse_press(x, y, button, modifiers)
+				break
+	def on_mouse_motion(self, x, y, dx, dy):
+		for i in self.sons:
+			if i.visible:
+				i.on_mouse_motion(x, y, dx, dy)
 	# 事件处理句柄：在点击激活控件后跟踪后续事件
 	def capture_events(self):
 		if self.window is not None:
@@ -85,7 +101,9 @@ class Control(pyglet.event.EventDispatcher):
 	def release_events(self):
 		if self.window is not None:
 			self.window.remove_handlers(self)
-Control.register_event_type('on_mouse_press')
+	def on_show(self):
+		pass
+Control.register_event_type('on_show')
 
 # 标签（用于控件）
 class Label(Control):
@@ -101,8 +119,8 @@ class Label(Control):
 		if self.label is not None:
 			self.label.x = self.x + self.width / 2
 			self.label.y = self.y + self.height / 2
-	def draw(self):
-		super(Label, self).draw()
+	def draw(self, range = None):
+		super(Label, self).draw(range)
 		self._draw(self.label)
 
 # 精灵控件
@@ -115,8 +133,8 @@ class SpriteControl(Control):
 		super(SpriteControl, self).on_resize()
 		if self.image is not None:
 			self.image.update(x = self.x, y = self.y, scale_x = self.width / self.image.t_width , scale_y = self.height / self.image.t_height)
-	def draw(self):
-		super(SpriteControl, self).draw()
+	def draw(self, range = None):
+		super(SpriteControl, self).draw(range)
 		self._draw(self.image)
 
 class Button(Control):
@@ -130,7 +148,9 @@ class Button(Control):
 	
 	# 按钮于按下到松开之间获取事件控制句柄
 	charged = False
+	hovering = False
 	def __init__(self, control, label = None, image = None, icon = None, pressed_image = None, direction = 0):
+		self.hover_color = (252,232,200)
 		super(Button, self).__init__(*control)
 		self.label = label
 		self.image = image
@@ -163,23 +183,29 @@ class Button(Control):
 		if self.label is not None:
 			self.label.x = self.x + self.width / 2
 			self.label.y = self.y + self.height / 2
+	def _draw_image(self, image):
+		if image is not None:
+			if self.hovering:
+				image.color = self.hover_color
+			else:
+				image.color = (255,255,255)
+			image.draw()
+		return image is not None
 	def draw_image(self):
 		if self.charged:
-			if self.pressed_image is not None:
-				self.pressed_image.draw()
-			elif self.image is not None:
-				# self.image.color = (216,204,192)
-				self.image.draw()
+			if not self._draw_image(self.pressed_image):
+				self._draw_image(self.image)
 		else:
-			if self.image is not None:
-				# self.image.color = (255,255,255)
-				self.image.draw()
-	def draw(self):
+			self._draw_image(self.image)
+	def draw(self, range = None):
 		# print('drawn a button')
-		super(Button, self).draw()
+		super(Button, self).draw(range)
 		self.draw_image()
 		self._draw(self.label)
 		self._draw(self.icon)
+	def on_mouse_motion(self, x, y, dx, dy):
+		super(Button, self).on_mouse_motion(x, y, dx, dy)
+		self.hovering =  self.hit_test(x,y)
 	def on_mouse_press(self, x, y, button, modifiers):
 		# print('got mouse press')
 		super(Button, self).on_mouse_press(x, y, button, modifiers)
@@ -196,6 +222,8 @@ class Button(Control):
 			self.dispatch_event('on_press')
 		self.charged = False
 	def on_press(self):
+		pass
+	def on_click(self):
 		pass
 # on_press:从按钮松开时触发事件
 Button.register_event_type('on_click')
@@ -218,14 +246,21 @@ class SwitchButton(Button):
 			return x[id]
 		else:
 			return None
-	def set_stage(self, _stage):
-		self._stage = _stage
+	def on_switch(self, stage):
+		pass	
+	def _set_stage(self, stage):
+		# 不触发事件
+		self._stage = stage
 		self.label = self._get(self.labels,self.stage)
 		self.image = self._get(self.images,self.stage)
 		self.icon = self._get(self.icons,self.stage)
 		self.pressed_image = self._get(self.pressed_images,self.stage)
 		self.on_resize()
+	def set_stage(self, stage):
+		self.dispatch_event('on_switch',stage)
+		self._set_stage(stage)
 	stage = property(lambda self:self._stage,set_stage)
+SwitchButton.register_event_type('on_switch')
 
 # 光标（不返回EVENT_HANDLED）
 class Caret(pyglet.text.caret.Caret):
@@ -241,7 +276,7 @@ class TextBox(Control):
 	
 	# layout:文本
 	# caret:光标(文本的)
-	def __init__(self, control, text = None, style = None, editable = False, multiline = False, back = None, padding = 0, select_backcolor = None, select_textcolor = None, caret_color = None):
+	def __init__(self, control, text = None, style = None, editable = False, multiline = False, back = None, padding = 0, select_backcolor = None, select_textcolor = None, caret_color = None, valign = 'center'):
 		super(TextBox, self).__init__(*control)
 		if text is None:
 			text = ''
@@ -254,6 +289,7 @@ class TextBox(Control):
 		self.padding = padding
 		self.layout = pyglet.text.layout.IncrementalTextLayout(
 			self.doc, self.width-padding*2, self.height-padding*2, multiline)
+		self.layout.content_valign = valign
 		if select_backcolor is not None:
 			self.layout.selection_background_color = select_backcolor
 		if select_textcolor is not None:
@@ -276,8 +312,8 @@ class TextBox(Control):
 			self.layout.y = self.y + self.padding
 			self.layout.width = self.width-self.padding*2
 			self.layout.height = self.height-self.padding*2
-	def draw(self):
-		super(TextBox, self).draw()
+	def draw(self, range = None):
+		super(TextBox, self).draw(range)
 		self._draw(self.back)
 		self._draw(self.layout)
 	def on_mouse_press(self, x, y, button, modifiers):
@@ -287,7 +323,7 @@ class TextBox(Control):
 			self.window.push_handlers(self.caret)
 
 class FormattedTextBox(TextBox):
-	def __init__(self, control, doc = None, editable = False, multiline = False, back = None, padding = 0, select_backcolor = None, select_textcolor = None, caret_color = None):
+	def __init__(self, control, doc = None, editable = False, multiline = False, back = None, padding = 0, select_backcolor = None, select_textcolor = None, caret_color = None, valign = 'center'):
 		super(TextBox, self).__init__(*control)
 		self.editable = editable
 		self.back = back
@@ -295,6 +331,7 @@ class FormattedTextBox(TextBox):
 		self.multiline = multiline
 		self.layout = None
 		self.doc = doc
+		self.layout.content_valign = valign
 		self.layout.x = self.x + padding
 		self.layout.y = self.y + padding
 		
@@ -312,6 +349,77 @@ class FormattedTextBox(TextBox):
 			self.layout = pyglet.text.layout.IncrementalTextLayout(
 			self.doc, self.width-self.padding*2, self.height-self.padding*2, self.multiline)
 	doc = property(lambda self:self._doc,set_doc)
+
+# 视频播放器
+class MediaPlayer(Control):
+	def __init__(self,control,player = None,loop = False):
+		super(MediaPlayer,self).__init__(*control)
+		self.player = player
+		self.loop = loop
+	def draw(self, range = None):
+		super(MediaPlayer, self).draw(range)
+		if self.player is not None:
+			t = self.player.get_texture()
+			if t is not None:
+				t.blit(self.x,self.y,width = self.width,height = self.height)
+	def clear(self):
+		self.pause()
+		self.player = None
+	def set_player(self,player):
+		self._player = player
+		if player is not None:
+			def f(event,selfevent):
+				def g(*args, **kw):
+					print('on_eos')
+					self.dispatch_event(selfevent)
+					return event(*args, **kw)
+				return g
+			player.on_eos = f(player.on_eos,'on_eos')
+			player.on_player_eos = f(player.on_player_eos,'on_player_eos')
+			player.on_source_group_eos = f(player.on_source_group_eos,'on_source_group_eos')
+			for i in player._groups:
+				i.loop = self.loop
+	player = property(lambda self:self._player,set_player)
+	def play(self):
+		if self.player is not None:
+			self.player.play()
+	def pause(self):
+		if self.player is not None:
+			self.player.pause()
+	def seek(self,val):
+		if self.player is not None:
+			self.player.seek(val)
+	def rewind(self):
+		self.seek(0)
+	def queue(self,source):
+		if self.player is not None:
+			self.player.queue(source)
+			self.player._groups[-1].loop = self.loop
+	def set_volume(self,volume):
+		if self.player is not None:
+			self.player.volume = volume
+	volume = property(lambda self:self.player.volume if self.player is not None else None,set_volume)
+	def set_loop(self,loop):
+		self._loop = loop
+		if self.player is not None:
+			for i in self.player._groups:
+				i.loop = loop
+	loop = property(lambda self:self._loop,set_loop)
+	def on_mouse_press(self, x, y, button, modifiers):
+		super(MediaPlayer, self).on_mouse_press(x, y, button, modifiers)
+		self.dispatch_event('on_press')
+	def on_eos(self):
+		pass
+	def on_player_eos(self):
+		pass
+	def on_source_group_eos(self):
+		pass
+	def on_press(self):
+		pass
+MediaPlayer.register_event_type('on_eos')
+MediaPlayer.register_event_type('on_player_eos')
+MediaPlayer.register_event_type('on_source_group_eos')
+MediaPlayer.register_event_type('on_press')
 
 # 进度条
 class ProgressBar(Control):
@@ -354,8 +462,8 @@ class ProgressBar(Control):
 	def set_text(self,x):
 		self.label.text = x
 	text = property(lambda self:self.label.text,set_text)
-	def draw(self):
-		super(ProgressBar, self).draw()
+	def draw(self, range = None):
+		super(ProgressBar, self).draw(range)
 		self._draw(self.back)
 		self._draw(self.bar)
 		self._draw(self.label)
@@ -371,10 +479,13 @@ class Slider(Control):
 		self.image = image
 		self.cursor = cursor
 		self.rate = rate
-	def set_rate(self, x):
+	def _set_rate(self, x):
 		x = max(0,min(x,1))
 		self._rate = x
 		self.on_resize()
+	def set_rate(self, x):
+		self._set_rate(x)
+		self.dispatch_event('on_change', self.rate)
 	rate = property(lambda self:self._rate,set_rate)
 	def on_resize(self):
 		super(Slider, self).on_resize()
@@ -383,8 +494,8 @@ class Slider(Control):
 		if self.cursor is not None:
 			k = self.height / self.cursor.t_height
 			self.cursor.update(x = self.x + self.rate*(self.width - k * self.cursor.t_width), y = self.y, scale = k)
-	def draw(self):
-		super(Slider, self).draw()
+	def draw(self, range = None):
+		super(Slider, self).draw(range)
 		self._draw(self.image)
 		self._draw(self.cursor)
 	def on_mouse_press(self, x, y, button, modifiers):
@@ -393,15 +504,17 @@ class Slider(Control):
 		self.rate = (x-self.x-self.cursor.width/2)/max(1,self.width-self.cursor.width)
 		self.capture_events()
 		self.dispatch_event('on_begin_scroll')
-		self.dispatch_event('on_change', self.rate)
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		self.rate = (x-self.x-self.cursor.width/2)/max(1,self.width-self.cursor.width)
-		self.dispatch_event('on_change', self.rate)
 	def on_mouse_release(self, x, y, button, modifiers):
 		self.release_events()
 		self.dispatch_event('on_end_scroll')
 	def on_change(self,val):
 		# print(val)
+		pass
+	def on_begin_scroll(self):
+		pass
+	def on_end_scroll(self):
 		pass
 
 Slider.register_event_type('on_begin_scroll')
@@ -423,10 +536,8 @@ class ScrollBar(Slider):
 		self.rate = 1-(y-self.y-self.cursor.height/2)/max(1,self.height-self.cursor.height)
 		self.capture_events()
 		self.dispatch_event('on_begin_scroll')
-		self.dispatch_event('on_change', self.rate)
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		self.rate = 1-(y-self.y-self.cursor.height/2)/max(1,self.height-self.cursor.height)
-		self.dispatch_event('on_change', self.rate)
 
 # 框架（控件组及布局容器）
 class Frame(Control):
@@ -442,9 +553,9 @@ class Frame(Control):
 
 # 视口
 class Viewport(Frame):
-	def draw(self):
+	def draw(self, range = None):
 		t = pyglet.image.get_buffer_manager().get_color_buffer().get_texture()
-		super(Viewport, self).draw()
+		super(Viewport, self).draw(range)
 		f = pyglet.image.get_buffer_manager().get_color_buffer().get_region(self.x,self.y,self.width,self.height).get_texture()
 		t.blit(0,0)
 		f.blit(self.x,self.y)
@@ -498,9 +609,9 @@ class ImageFrame(Frame):
 		self.back = back
 		self.front = front
 		super(ImageFrame, self).__init__(control)
-	def draw(self):
+	def draw(self, range = None):
 		self._draw(self.back)
-		super(ImageFrame, self).draw()
+		super(ImageFrame, self).draw(range)
 		self._draw(self.front)
 	def on_resize(self):
 		super(ImageFrame, self).on_resize()
@@ -514,12 +625,15 @@ class ImageLayoutFrame(ImageFrame,LayoutFrame):
 		super(ImageLayoutFrame, self).__init__(control,back,front)
 		self.layouter = layouter
 			
-def ScrollTextBox_defaultlayout(self):
-	SCROLL_BAR_WIDTH = 20
-	if self.scrollbar is not None:
-		self.scrollbar.pos = Posattr((1,-SCROLL_BAR_WIDTH),(0,0),(0,SCROLL_BAR_WIDTH),(1,0))
-	if self.doc is not None:
-		self.doc.pos = Posattr((0,0),(0,0),(1,-SCROLL_BAR_WIDTH),(1,0))
+def ScrollTextBox_defaultlayout_gen(SCROLL_BAR_WIDTH = 20):
+	def f(self):
+		if self.scrollbar is not None:
+			self.scrollbar.pos = Posattr((1,-SCROLL_BAR_WIDTH),(0,0),(0,SCROLL_BAR_WIDTH),(1,0))
+		if self.doc is not None:
+			self.doc.pos = Posattr((0,0),(0,0),(1,-SCROLL_BAR_WIDTH),(1,0))
+	return f
+ScrollTextBox_defaultlayout = ScrollTextBox_defaultlayout_gen()
+
 class ScrollTextBox(LayoutFrame):
 	def __init__(self, control, doc = None, scrollbar = None, layouter = ScrollTextBox_defaultlayout):
 		super(ScrollTextBox, self).__init__(control)
@@ -558,17 +672,18 @@ class ScrollTextBox(LayoutFrame):
 		self.relayout()
 	scrollbar = property(lambda self:self._scrollbar,set_scrollbar)
 
-def ButtonSlider_defaultlayout(self):
-	PADDING_RATE = 0.2
-	HPADDING_RATE = 0.5
-	VPADDING_RATE = 0.15
-	rate = 1/(len(self.sons)*(1+PADDING_RATE)-PADDING_RATE+2*HPADDING_RATE)
-	padding_rate = PADDING_RATE * rate
-	hpadding_rate = HPADDING_RATE * rate
-	cur_t = hpadding_rate
-	for i in self.sons:
-		i.pos = Posattr((cur_t,0),(VPADDING_RATE,0),(rate,0),(1-VPADDING_RATE*2,0))
-		cur_t += rate + padding_rate
+def ButtonSlider_defaultlayout_gen(PADDING_RATE = 0.2, HPADDING_RATE = 0.5, VPADDING_RATE = 0.15):
+	def f(self):
+		rate = 1/(len(self.sons)*(1+PADDING_RATE)-PADDING_RATE+2*HPADDING_RATE)
+		padding_rate = PADDING_RATE * rate
+		hpadding_rate = HPADDING_RATE * rate
+		cur_t = hpadding_rate
+		for i in self.sons:
+			i.pos = Posattr((cur_t,0),(VPADDING_RATE,0),(rate,0),(1-VPADDING_RATE*2,0))
+			cur_t += rate + padding_rate
+	return f
+ButtonSlider_defaultlayout = ButtonSlider_defaultlayout_gen()
+		
 # 按钮条
 class ButtonSlider(ImageFrame, LayoutFrame):
 	def __init__(self, control, back = None, front = None, buttons = None, layouter = ButtonSlider_defaultlayout):
@@ -619,20 +734,19 @@ class MessageInteractor(ImageFrame):
 	submit_key = property(lambda self:self._submit_key,set_submit_key_event)
 MessageInteractor.register_event_type('on_submit')
 
-def AlertBox_defaultlayout(self):
-	BUTTON_HEIGHT = 30
-	BUTTON_BLANKING = 10
-	PADDING = 20
-	TITLE_PADDING = 20
-	TITLE_HEIGHT = 30
-	if self.title is not None:
-		self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
-	cur_h = PADDING
-	if self.button is not None:
-		self.button.pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
-	cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
-	if self.doc is not None:
-		self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
+def AlertBox_defaultlayout_gen(BUTTON_HEIGHT = 30, BUTTON_BLANKING = 10, PADDING = 20, TITLE_PADDING = 20, TITLE_HEIGHT = 30, BUTTON_X = (0.2,20), BUTTON_WIDTH = (0.6,-40)):
+	def f(self):
+		if self.title is not None:
+			self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
+		cur_h = PADDING
+		if self.button is not None:
+			self.button.pos = Posattr(BUTTON_X,(0,cur_h),BUTTON_WIDTH,(0,BUTTON_HEIGHT))
+		cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
+		if self.doc is not None:
+			self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
+	return f
+AlertBox_defaultlayout = AlertBox_defaultlayout_gen()
+
 class AlertBox(MessageInteractor, LayoutFrame):
 	def __init__(self, control, back = None, front = None, title = Label(()),  doc = None, button = None, layouter = AlertBox_defaultlayout):
 		super(AlertBox, self).__init__(control, back, front)
@@ -679,21 +793,20 @@ class AlertBox(MessageInteractor, LayoutFrame):
 		self.relayout()
 	doc = property(lambda self:self._doc, set_doc)
 
-def MessageBox_defaultlayout(self):
-	BUTTON_HEIGHT = 30
-	BUTTON_BLANKING = 10
-	PADDING = 20
-	TITLE_PADDING = 20
-	TITLE_HEIGHT = 30
-	if self.title is not None:
-		self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
-	cur_h = PADDING
-	if self.buttons is not None:
-		for i in range(len(self.buttons)):
-			self.buttons[i].pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
-			cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
-	if self.doc is not None:
-		self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
+def MessageBox_defaultlayout_gen(BUTTON_HEIGHT = 30, BUTTON_BLANKING = 10, PADDING = 20, TITLE_PADDING = 20, TITLE_HEIGHT = 30):
+	def f(self):
+		if self.title is not None:
+			self.title.pos = Posattr((0.5,0),(1,-TITLE_PADDING-TITLE_HEIGHT/2),(0,0),(0,0))
+		cur_h = PADDING
+		if self.buttons is not None:
+			for i in range(len(self.buttons)):
+				self.buttons[i].pos = Posattr((0.2,PADDING),(0,cur_h),(0.6,-2*PADDING),(0,BUTTON_HEIGHT))
+				cur_h += BUTTON_HEIGHT + BUTTON_BLANKING
+		if self.doc is not None:
+			self.doc.pos = Posattr((0,PADDING),(0,cur_h),(1,-2*PADDING),(1,-cur_h-TITLE_PADDING-TITLE_HEIGHT))
+	return f
+MessageBox_defaultlayout = MessageBox_defaultlayout_gen()
+	
 # 提示选择框（含交互）
 class MessageBox(MessageInteractor, LayoutFrame):
 	def __init__(self, control, back = None, front = None, title = None,  doc = None, buttons = None, layouter = MessageBox_defaultlayout):
@@ -771,15 +884,9 @@ class MessageInput(AlertBox):
 		self.hide()
 	submit_key = property(lambda self:self._submit_key,set_submit_key_event)
 
-def MessagePage_defaultlayout(self):
-	return MessageBox_defaultlayout(self)
-	# 待填
-
-# 事件页面
-# 布局待设计 ……
-class MessagePage(MessageBox):
-	def __init__(self, control, back = None, front = None, title = Label(()),  doc = TextBox((),'',{}), buttons = None, layouter = MessagePage_defaultlayout):
-		super(MessagePage, self).__init__(control, back, front, title, doc, buttons, layouter)
+# def MessagePage_defaultlayout_gen(self):
+	# return MessageBox_defaultlayout(self)
+	# # 待填
 
 def TagPages_defaultlayoutV(self):
 	TAG_WIDTH = 90
@@ -866,15 +973,17 @@ class Form(pyglet.window.Window):
 		pyglet.gl.glClearColor(1, 1, 1, 1)
 		pyglet.gl.glClear(pyglet.gl.GL_COLOR_BUFFER_BIT)
 		self.clear()
-		self.root_control.draw()
+		self.root_control.draw((0,0,self.width,self.height))
 	def on_mouse_press(self, x, y, symbol, modifiers):
 		# 按下鼠标时清除所有控件句柄
 		self.remove_handlers()
 		# print('removed handlers')
 		self.root_control.on_mouse_press(x, y, symbol, modifiers)
+	def on_mouse_motion(self, x, y, dx, dy):
+		self.root_control.on_mouse_motion(x, y, dx, dy)
 	def draw(self):
 		self.clear()
-		self.root_control.draw()
+		self.root_control.draw((0,0,self.width,self.height))
 	def show(self):
 		self.root_control.show()
 	def hide(self):
