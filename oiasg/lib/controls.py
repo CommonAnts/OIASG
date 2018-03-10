@@ -11,9 +11,9 @@ class Posattr(object):
 		self.height = height
 	def __call__(self,x,y,width,height):
 		def c_h(p):
-			return int(width*p[0]+p[1])
+			return int(width*p[0]+p[1]+0.5)
 		def c_v(p):
-			return int(height*p[0]+p[1])
+			return int(height*p[0]+p[1]+0.5)
 		return x+c_h(self.x),y+c_v(self.y),c_h(self.width),c_v(self.height)
 		
 # 精灵（用于控件）
@@ -36,9 +36,10 @@ class Control(pyglet.event.EventDispatcher):
 	# x,y:控件位置
 	# width,height:控件大小
 	# visible:是否在显示
-	def __init__(self, window = None, parent = None, pos = Posattr(), x = 0, y = 0, width = 1, height = 1):
+	def __init__(self, window = None, parent = None, pos = Posattr(), x = 0, y = 0, width = 1, height = 1, absx = None, absy = None, abswidth = None, absheight = None):
 		super(Control, self).__init__()
 		# parent:控件的上级
+		self.opacity = False
 		self.visible = False
 		self.sons = []
 		self.window = window
@@ -46,16 +47,32 @@ class Control(pyglet.event.EventDispatcher):
 		self.y = y
 		self.width = width
 		self.height = height
+		self.absx = absx
+		self.absy = absy
+		self.abswidth = abswidth
+		self.absheight = absheight
 		self.parent = parent
 		self.pos = pos
 	# 碰撞检测：坐标是否在控件的矩形区域之内（严格）
+	def set_abspos(self,abspos):
+		self.x,self.y,self.width,self.height = abspos
+		if self.absx is not None:
+			self.x = self.absx
+		if self.absy is not None:
+			self.y = self.absy
+		if self.abswidth is not None:
+			self.width = self.abswidth
+		if self.absheight is not None:
+			self.height = self.absheight
+		self.on_resize()
+	abspos = property(lambda self:(self.x,self.y,self.width,self.height),set_abspos)
 	def on_resize(self):
 		pass
 	def hit_test(self, x, y):
 		return (self.x < x < self.x + self.width and
 				self.y < y < self.y + self.height)
 	def intersect(self,x,y,width,height):
-		if x > self.x+self.width or self.x > x + width or y > self.y+height or self.y > y+height:
+		if x > self.x+self.width or self.x > x + width or y > self.y+self.height or self.y > y+height:
 			return False
 		return True
 	# 显示和隐藏
@@ -89,7 +106,8 @@ class Control(pyglet.event.EventDispatcher):
 			i = self.sons[j]
 			if i.visible and i.hit_test(x,y):
 				i.on_mouse_press(x, y, button, modifiers)
-				break
+				if not i.opacity:
+					break
 	def on_mouse_motion(self, x, y, dx, dy):
 		for i in self.sons:
 			if i.visible:
@@ -115,10 +133,10 @@ class Label(Control):
 		self.label.text = x
 	text = property(lambda self:self.label.text,set_text)
 	def on_resize(self):
-		super(Label, self).on_resize()
 		if self.label is not None:
-			self.label.x = self.x + self.width / 2
-			self.label.y = self.y + self.height / 2
+			self.label.x = int(self.x + self.width / 2 + 0.5)
+			self.label.y = int(self.y + self.height / 2 + 0.5)
+		super(Label, self).on_resize()
 	def draw(self, range = None):
 		super(Label, self).draw(range)
 		self._draw(self.label)
@@ -130,9 +148,9 @@ class SpriteControl(Control):
 		self.image = image
 		self.on_resize()
 	def on_resize(self):
-		super(SpriteControl, self).on_resize()
 		if self.image is not None:
 			self.image.update(x = self.x, y = self.y, scale_x = self.width / self.image.t_width , scale_y = self.height / self.image.t_height)
+		super(SpriteControl, self).on_resize()
 	def draw(self, range = None):
 		super(SpriteControl, self).draw(range)
 		self._draw(self.image)
@@ -149,20 +167,20 @@ class Button(Control):
 	# 按钮于按下到松开之间获取事件控制句柄
 	charged = False
 	hovering = False
-	def __init__(self, control, label = None, image = None, icon = None, pressed_image = None, direction = 0):
-		self.hover_color = (252,232,200)
+	def __init__(self, control, label = None, image = None, icon = None, pressed_image = None, direction = 0, color = (255,255,255), hover_color = (255,255,255)):
 		super(Button, self).__init__(*control)
 		self.label = label
 		self.image = image
 		self.icon = icon
 		self.pressed_image = pressed_image
 		self.direction = direction
+		self.hover_color = hover_color
+		self.color = color
 		self.on_resize()
 	def set_text(self, x):
 		self.label.text = x
 	text = property(lambda self:self.label.text,set_text)
 	def on_resize(self):
-		super(Button, self).on_resize()
 		if self.image is not None:
 			self.image.update(x = self.x, y = self.y, scale_x = self.width / self.image.t_width , scale_y = self.height / self.image.t_height)
 		if self.pressed_image is not None:
@@ -181,14 +199,17 @@ class Button(Control):
 				k = self.width / self.icon.t_width
 				self.icon.update(x = self.x, y = self.y, scale = k)
 		if self.label is not None:
-			self.label.x = self.x + self.width / 2
-			self.label.y = self.y + self.height / 2
+			self.label.x = int(self.x + self.width / 2 + 0.5)
+			self.label.y = int(self.y + self.height / 2 + 0.5)
+			# self.label.height = None
+			# self.label.width = None
+		super(Button, self).on_resize()
 	def _draw_image(self, image):
 		if image is not None:
 			if self.hovering:
 				image.color = self.hover_color
 			else:
-				image.color = (255,255,255)
+				image.color = self.color
 			image.draw()
 		return image is not None
 	def draw_image(self):
@@ -231,14 +252,16 @@ Button.register_event_type('on_press')
 
 # 多外观按钮
 class SwitchButton(Button):
-	def __init__(self, control, labels = None, images = None, icons = None, pressed_images = None, direction = 0):
+	def __init__(self, control, labels = None, images = None, icons = None, pressed_images = None, direction = 0, color = (255,255,255), hover_color = (255,255,255)):
 		super(SwitchButton, self).__init__(control)
 		self.labels = labels
 		self.images = images
 		self.icons = icons
 		self.pressed_images = pressed_images
 		self.direction = direction
-		self.stage = 0		
+		self.hover_color = hover_color
+		self.color = color
+		self.stage = 0
 	def _get(self, x, id):
 		if x is None:
 			return None
@@ -247,7 +270,7 @@ class SwitchButton(Button):
 		else:
 			return None
 	def on_switch(self, stage):
-		pass	
+		pass
 	def _set_stage(self, stage):
 		# 不触发事件
 		self._stage = stage
@@ -304,7 +327,6 @@ class TextBox(Control):
 		self.doc.text = x
 	text = property(lambda self:self.doc.text,set_text)
 	def on_resize(self):
-		super(TextBox, self).on_resize()
 		if self.back is not None:
 			self.back.update(x = self.x, y = self.y, scale_x = self.width / self.back.t_width , scale_y = self.height / self.back.t_height)
 		if self.layout is not None:
@@ -312,6 +334,7 @@ class TextBox(Control):
 			self.layout.y = self.y + self.padding
 			self.layout.width = self.width-self.padding*2
 			self.layout.height = self.height-self.padding*2
+		super(TextBox, self).on_resize()
 	def draw(self, range = None):
 		super(TextBox, self).draw(range)
 		self._draw(self.back)
@@ -370,15 +393,11 @@ class MediaPlayer(Control):
 		if player is not None:
 			def f(event,selfevent):
 				def g(*args, **kw):
-					print('on_eos')
 					self.dispatch_event(selfevent)
-					return event(*args, **kw)
 				return g
 			player.on_eos = f(player.on_eos,'on_eos')
 			player.on_player_eos = f(player.on_player_eos,'on_player_eos')
-			player.on_source_group_eos = f(player.on_source_group_eos,'on_source_group_eos')
-			for i in player._groups:
-				i.loop = self.loop
+			player.loop = self.loop
 	player = property(lambda self:self._player,set_player)
 	def play(self):
 		if self.player is not None:
@@ -394,7 +413,6 @@ class MediaPlayer(Control):
 	def queue(self,source):
 		if self.player is not None:
 			self.player.queue(source)
-			self.player._groups[-1].loop = self.loop
 	def set_volume(self,volume):
 		if self.player is not None:
 			self.player.volume = volume
@@ -402,8 +420,7 @@ class MediaPlayer(Control):
 	def set_loop(self,loop):
 		self._loop = loop
 		if self.player is not None:
-			for i in self.player._groups:
-				i.loop = loop
+			self.player.loop = loop
 	loop = property(lambda self:self._loop,set_loop)
 	def on_mouse_press(self, x, y, button, modifiers):
 		super(MediaPlayer, self).on_mouse_press(x, y, button, modifiers)
@@ -412,13 +429,10 @@ class MediaPlayer(Control):
 		pass
 	def on_player_eos(self):
 		pass
-	def on_source_group_eos(self):
-		pass
 	def on_press(self):
 		pass
 MediaPlayer.register_event_type('on_eos')
 MediaPlayer.register_event_type('on_player_eos')
-MediaPlayer.register_event_type('on_source_group_eos')
 MediaPlayer.register_event_type('on_press')
 
 # 进度条
@@ -441,7 +455,6 @@ class ProgressBar(Control):
 		self.on_resize()
 	rate = property(lambda self:self._rate,set_rate)
 	def on_resize(self):
-		super(ProgressBar, self).on_resize()
 		if self.back is not None:
 			self.back.update(x = self.x, y = self.y, scale_x = self.width / self.back.t_width , scale_y = self.height / self.back.t_height)
 		if self.bar is not None:
@@ -451,14 +464,15 @@ class ProgressBar(Control):
 			if self.direction == 0:
 				self.bar.update(x = L, y = D, scale_x = (R-L)*ra/self.bar.t_width, scale_y = (U-D)/self.bar.t_height)
 			elif self.direction == 1:
-				self.bar.update(x = R-(R-L)*ra/self.bar.t_width, y = D, scale_x = (R-L)*ra/self.bar.t_width, scale_y = (U-D)/self.bar.t_height)
+				self.bar.update(x = int(R-(R-L)*ra/self.bar.t_width+0.5), y = D, scale_x = (R-L)*ra/self.bar.t_width, scale_y = (U-D)/self.bar.t_height)
 			elif self.direction == 2:
 				self.bar.update(x = L, y = D, scale_x = (R-L)/self.bar.t_width, scale_y = (U-D)*ra/self.bar.t_height)
 			elif self.direction == 3:
-				self.bar.update(x = L, y = U-(U-D)*ra/self.height, scale_x = (R-L)/self.bar.t_width, scale_y = (U-D)*ra/self.bar.t_height)
+				self.bar.update(x = L, y = int(U-(U-D)*ra/self.height+0.5), scale_x = (R-L)/self.bar.t_width, scale_y = (U-D)*ra/self.bar.t_height)
 		if self.label is not None:
-			self.label.x = self.x + self.width / 2
-			self.label.y = self.y + self.height / 2
+			self.label.x = int(self.x + self.width / 2 + 0.5)
+			self.label.y = int(self.y + self.height / 2 + 0.5)
+		super(ProgressBar, self).on_resize()
 	def set_text(self,x):
 		self.label.text = x
 	text = property(lambda self:self.label.text,set_text)
@@ -488,12 +502,12 @@ class Slider(Control):
 		self.dispatch_event('on_change', self.rate)
 	rate = property(lambda self:self._rate,set_rate)
 	def on_resize(self):
-		super(Slider, self).on_resize()
 		if self.image is not None:
-			self.image.update(x = self.x, y = self.y + self.height/2 - self.image.t_height/2, scale_x = self.width / self.image.t_width)
+			self.image.update(x = self.x, y = int(self.y + self.height/2 - self.image.t_height/2+0.5), scale_x = self.width / self.image.t_width)
 		if self.cursor is not None:
 			k = self.height / self.cursor.t_height
 			self.cursor.update(x = self.x + self.rate*(self.width - k * self.cursor.t_width), y = self.y, scale = k)
+		super(Slider, self).on_resize()
 	def draw(self, range = None):
 		super(Slider, self).draw(range)
 		self._draw(self.image)
@@ -524,12 +538,12 @@ Slider.register_event_type('on_change')
 # 垂直滚动条
 class ScrollBar(Slider):
 	def on_resize(self):
-		super(Slider, self).on_resize()
 		if self.image is not None:
-			self.image.update(x = self.x + self.width/2 - self.image.t_width/2, y = self.y, scale_y = self.height / self.image.t_height)
+			self.image.update(x = int(self.x + self.width/2 - self.image.t_width/2+0.5), y = self.y, scale_y = self.height / self.image.t_height)
 		if self.cursor is not None:
 			k = self.width / self.cursor.t_width
 			self.cursor.update(x = self.x, y = self.y + (1-self.rate)*(self.height - k * self.cursor.t_height), scale = k)
+		super(Slider, self).on_resize()
 	def on_mouse_press(self, x, y, button, modifiers):
 		# print('got mouse press')
 		super(Slider, self).on_mouse_press(x, y, button, modifiers)
@@ -546,20 +560,44 @@ class Frame(Control):
 		self.on_resize()
 	def on_resize(self):
 		# print(self.x,self.y,self.height,self.width)
-		super(Frame, self).on_resize()
 		for i in self.sons:
-			i.x , i.y , i.width ,i.height = i.pos(self.x,self.y,self.width,self.height)
+			i.abspos = i.pos(self.x,self.y,self.width,self.height)
 			i.on_resize()
+		super(Frame, self).on_resize()
 
 # 视口
 class Viewport(Frame):
+	def __init__(self, control, x_base = 0, y_base = 0):
+		self._x_base = x_base
+		self._y_base = y_base
+		super(Viewport, self).__init__(control)
+		self.on_resize()
+	def _on_resize(self):
+		for i in self.sons:
+			i.abspos = i.pos(self.x + self.x_base,self.y + self.y_base,self.width,self.height)
+			i.on_resize()
+	def on_resize(self):
+		self._on_resize()
+		super(Frame, self).on_resize()
+		self.dispatch_event('on_view_resize')
+	def on_view_resize(self):
+		pass
+	def set_x_base(self,x_base):
+		self._x_base = x_base
+		self._on_resize()
+	x_base = property(lambda self:self._x_base,set_x_base)
+	def set_y_base(self,y_base):
+		self._y_base = y_base
+		self._on_resize()
+	y_base = property(lambda self:self._y_base,set_y_base)
 	def draw(self, range = None):
 		t = pyglet.image.get_buffer_manager().get_color_buffer().get_texture()
 		super(Viewport, self).draw(range)
 		f = pyglet.image.get_buffer_manager().get_color_buffer().get_region(self.x,self.y,self.width,self.height).get_texture()
 		t.blit(0,0)
 		f.blit(self.x,self.y)
-
+Viewport.register_event_type('on_view_resize')
+		
 # 多页面
 class MultiPage(Frame):
 	def __init__(self, control, pages = None):
@@ -601,6 +639,79 @@ class LayoutFrame(Frame):
 		self.relayout()
 	layouter = property(lambda self:self._layouter,set_layouter)
 
+def Grid_defaultlayout_gen(COLUMES = 1, PADDING = 20, ITEM_BLANKING = 10, ITEM_HEIGHT = 30, ITEM_WIDTH = None):
+	def Grid_defaultlayout(self):
+		if ITEM_WIDTH is None:
+			item_wk = 1/COLUMES
+			item_wb = -(ITEM_BLANKING*(COLUMES-1)+PADDING*2)/COLUMES
+		else:
+			item_wk = 0
+			item_wb = ITEM_WIDTH
+		cur_xk, cur_xb, cur_yk, cur_yb = 0, PADDING, 1, -ITEM_HEIGHT-PADDING
+		for i in range(len(self.sons)):
+			self.sons[i].pos = Posattr((cur_xk,cur_xb),(cur_yk,cur_yb),(item_wk,item_wb),(0,ITEM_HEIGHT))
+			if (i+1)%COLUMES == 0:
+				cur_xk , cur_xb = 0, PADDING
+				cur_yb -= ITEM_BLANKING + ITEM_HEIGHT
+			else:
+				cur_xk += item_wk
+				cur_xb += item_wb + ITEM_BLANKING
+	return Grid_defaultlayout
+
+Grid_defaultlayout = Grid_defaultlayout_gen()
+
+class Grid(LayoutFrame):
+	def __init__(self,control,layouter = Grid_defaultlayout):
+		super(Grid, self).__init__(control)
+		self.layouter = layouter
+	
+class SelectButtons(Grid):
+	def __init__(self, control, buttons = None, layouter = Grid_defaultlayout):
+		super(SelectButtons, self).__init__(control,layouter)
+		self.layouter = layouter
+		self.buttons = buttons if buttons is not None else []
+	def set_buttons_event(self):
+		for i in range(len(self.buttons)):
+			def g(i):
+				def f():
+					self.button = i
+				return f
+			self.buttons[i].on_press = g(i)
+	def insert(self, button):
+		if button not in self.buttons:
+			self.buttons.append(button)
+		if button not in self.sons:
+			self.sons.append(button)
+		self.set_buttons_event()
+		self.relayout()
+		self.button = 0
+	def remove(self, button):
+		self.buttons.remove(button)
+		self.sons.remove(button)
+		self.set_buttons_event()
+		self.relayout()
+		self.button = 0
+	def set_buttons(self, buttons):
+		self._buttons = buttons
+		self.sons = []
+		self.sons += buttons
+		self.set_buttons_event()
+		self.relayout()
+		self.button = 0
+	buttons = property(lambda self:self._buttons,set_buttons)
+	def set_button(self, button):
+		self._button = button
+		for i in range(len(self.buttons)):
+			if i == button:
+				self.buttons[i].stage = 1
+			else:
+				self.buttons[i].stage = 0
+		self.dispatch_event('on_switch',self.button)
+	button = property(lambda self:self._button,set_button)
+	def on_switch(self, button):
+		pass
+SelectButtons.register_event_type('on_switch')
+	
 # 图片框架
 class ImageFrame(Frame):
 	# back:背景图片(AbstractImage)
@@ -614,11 +725,11 @@ class ImageFrame(Frame):
 		super(ImageFrame, self).draw(range)
 		self._draw(self.front)
 	def on_resize(self):
-		super(ImageFrame, self).on_resize()
 		if self.back is not None:
 			self.back.update(x = self.x, y = self.y, scale_x = self.width / self.back.t_width , scale_y = self.height / self.back.t_height)
 		if self.front is not None:
 			self.front.update(x = self.x, y = self.y, scale_x = self.width / self.front.t_width , scale_y = self.height / self.front.t_height)
+		super(ImageFrame, self).on_resize()
 
 class ImageLayoutFrame(ImageFrame,LayoutFrame):
 	def __init__(self, control, back = None, front = None, layouter = lambda self:None):
@@ -663,9 +774,8 @@ class ScrollTextBox(LayoutFrame):
 				self.sons.append(scrollbar)
 			if self.doc is not None and self.doc.layout is not None:
 				def f(event):
-					def g(*args, **kw):
-						self.doc.layout.ensure_line_visible(min(max(int(args[0]*self.doc.layout.get_line_count()),0),self.doc.layout.get_line_count()-1))
-						return event(*args, **kw)
+					def g(rate):
+						self.doc.layout.ensure_line_visible(min(max(int(rate*self.doc.layout.get_line_count()),0),self.doc.layout.get_line_count()-1))
 					return g
 				self.scrollbar.on_change = f(self.scrollbar.on_change)
 		self.sons = list(filter(self.iskey,self.sons))
@@ -829,10 +939,9 @@ class MessageBox(MessageInteractor, LayoutFrame):
 				self.sons.append(button)
 		self.sons = list(filter(self.iskey,self.sons))
 		def f(event, id):
-			def g(*args, **kw):
+			def g():
 				self.result = id
 				self.dispatch_event('on_submit', self.result)
-				return event(*args, **kw)
 			return g
 		if buttons is not None:
 			for i in range(len(buttons)):
@@ -888,32 +997,46 @@ class MessageInput(AlertBox):
 	# return MessageBox_defaultlayout(self)
 	# # 待填
 
-def TagPages_defaultlayoutV(self):
-	TAG_WIDTH = 90
-	TAG_PADDING = 5
-	tag_c = TAG_PADDING*(len(self.pages)+1)/max(1,len(self.pages))
-	tag_k = 1/max(1,len(self.pages))
-	cur_k = 0
-	cur_h = TAG_PADDING
-	for i in range(len(self.pages)):
-		self.pages[i][0].pos = Posattr((0,0),(cur_k,cur_h),(0,TAG_WIDTH),(tag_k,-tag_c))
-		cur_k += tag_k
-		cur_h += - tag_c + TAG_PADDING
-		self.pages[i][1].pos = Posattr((0,TAG_WIDTH),(0,0),(1,-TAG_WIDTH),(1,0))
+def TagPages_defaultlayoutV_gen(TAG_WIDTH = 90,	TAG_PADDING = 5, TAG_HEIGHT = None, FULL_PAGE = False):
+	def TagPages_defaultlayoutV(self):
+		if TAG_HEIGHT is None:
+			tag_c = -TAG_PADDING*(len(self.pages)+1)/max(1,len(self.pages))
+			tag_k = 1/max(1,len(self.pages))
+			cur_k = 0
+			cur_h = TAG_PADDING
+		else:
+			tag_c = TAG_HEIGHT
+			tag_k = 0
+			cur_k = 1
+			cur_h = -len(self.pages)*(TAG_HEIGHT+TAG_PADDING)
+		for i in range(len(self.pages)-1,-1,-1):
+			self.pages[i][0].pos = Posattr((0,0),(cur_k,cur_h),(0,TAG_WIDTH),(tag_k,tag_c))
+			cur_k += tag_k
+			cur_h += tag_c + TAG_PADDING
+			self.pages[i][1].pos = Posattr() if FULL_PAGE else Posattr((0,TAG_WIDTH),(0,0),(1,-TAG_WIDTH),(1,0))
+	return TagPages_defaultlayoutV
+TagPages_defaultlayoutV = TagPages_defaultlayoutV_gen()
 
-def TagPages_defaultlayoutH(self):
-	TAG_HEIGHT = 30
-	TAG_PADDING = 5
-	tag_c = TAG_PADDING*(len(self.pages)+1)/max(1,len(self.pages))
-	tag_k = 1/max(1,len(self.pages))
-	cur_k = 0
-	cur_w = TAG_PADDING
-	for i in range(len(self.pages)):
-		self.pages[i][0].pos = Posattr((cur_k,cur_w),(1,-TAG_HEIGHT),(tag_k,-tag_c),(0,TAG_HEIGHT))
-		cur_k += tag_k
-		cur_w += - tag_c + TAG_PADDING
-		self.pages[i][1].pos = Posattr((0,0),(0,0),(1,0),(1,-TAG_HEIGHT))
-
+def TagPages_defaultlayoutH_gen(TAG_HEIGHT = 30, TAG_PADDING = 5, TAG_WIDTH = None, FULL_PAGE = False):
+	def TagPages_defaultlayoutH(self):
+		if TAG_WIDTH is None:
+			tag_c = -TAG_PADDING*(len(self.pages)+1)/max(1,len(self.pages))
+			tag_k = 1/max(1,len(self.pages))
+			cur_k = 0
+			cur_w = TAG_PADDING
+		else:
+			tag_c = TAG_WIDTH
+			tag_k = 0
+			cur_k = 0
+			cur_w = TAG_PADDING
+		for i in range(len(self.pages)):
+			self.pages[i][0].pos = Posattr((cur_k,cur_w),(1,-TAG_HEIGHT),(tag_k,-tag_c),(0,TAG_HEIGHT))
+			cur_k += tag_k
+			cur_w += tag_c + TAG_PADDING
+			self.pages[i][1].pos = Posattr() if FULL_PAGE else Posattr((0,0),(0,0),(1,0),(1,-TAG_HEIGHT))
+	return TagPages_defaultlayoutH
+TagPages_defaultlayoutH = TagPages_defaultlayoutH_gen()
+			
 # 带标签的页面
 class TagPages(LayoutFrame):
 	def __init__(self, control, pages = None, layouter = TagPages_defaultlayoutV):
@@ -954,6 +1077,36 @@ class TagPages(LayoutFrame):
 	def on_switch(self, page):
 		# print('on switch:%d' % page)
 		pass
+	def draw(self, range = None):
+		if range is None:
+			x, y, width, height = self.x, self.y, self.width, self.height
+		else:
+			x, y, width, height = range
+			x = max(x, self.x)
+			y = max(y, self.y)
+			width = min(width, self.x + self.width - x)
+			height = min(height, self.y + self.height - y)
+		for i in self.pages:
+			if i[1].visible and i[1].intersect(x,y,width,height):
+				i[1].draw((x,y,width,height))
+		for i in self.pages:
+			if i[0].visible and i[0].intersect(x,y,width,height):
+				i[0].draw((x,y,width,height))
+	def on_mouse_press(self, x, y, button, modifiers):
+		flag = False
+		for j in range(len(self.pages)-1,-1,-1):
+			i = self.pages[j]
+			if i[0].visible and i[0].hit_test(x,y):
+				i[0].on_mouse_press(x, y, button, modifiers)
+				flag = True
+				break
+		if not flag:
+			for j in range(len(self.pages)-1,-1,-1):
+				i = self.pages[j]
+				if i[1].visible and i[1].hit_test(x,y):
+					i[1].on_mouse_press(x, y, button, modifiers)
+					flag = True
+					break
 TagPages.register_event_type('on_switch')
 
 # 科技树

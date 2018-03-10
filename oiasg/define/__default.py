@@ -1,8 +1,21 @@
 {
+	# 基本设置
+	
+	'_DEBUG':True,
+	
 	# 基本信息
 	
 	'GAME_NAME':'OIASG TEST',
+	
+	# RESOURCES 及其它由 pyglet 读取的资源路径分隔符永远是"/"，无论操作系统如何
 	'RESOURCES':['resources'],
+	
+	'SETTING_KEYS':[
+		'FULLSCREEN',
+		'VOLUME_MUSIC',
+		'VOLUME_EFFECT',
+		'VOLUME_GAME'
+	],
 	
 	# 通用外观
 	
@@ -10,7 +23,7 @@
 		('杨任东竹石体-Regular.ttf','杨任东竹石体-Regular'),
 		('杨任东竹石体-Semibold.ttf','杨任东竹石体-Semibold')
 	],
-	'FULLSCREEN':True,
+	'FULLSCREEN':False,
 	'MOUSE_CURSOR':'cursor.png',
 	'ICON':'icon.ico',
 	'DEFAULT_POS':((0,0),(0,0),(1,0),(1,0)),
@@ -31,38 +44,50 @@
 	'NORMAL_MENU_BACK':'frame_back.png',
 	'NORMAL_DEFAULT_IMAGE':'default.png',
 	
+	# 通用大标题
+	
+	'NORMAL_TITLE0_FONT':'杨任东竹石体-Semibold',
+	'NORMAL_TITLE0_FONT_SIZE':44,
+	'NORMAL_TITLE0_COLOR':(131,84,7,255),
+	
 	# 通用标题
 	
 	'NORMAL_TITLE_FONT':'杨任东竹石体-Semibold',
-	'NORMAL_TITLE_FONT_SIZE':24,
+	'NORMAL_TITLE_FONT_SIZE':28,
 	'NORMAL_TITLE_COLOR':(255,255,255,255),
 	
 	# 通用二级标题
 	
 	'NORMAL_TITLE2_FONT':'杨任东竹石体-Semibold',
-	'NORMAL_TITLE2_FONT_SIZE':22,
+	'NORMAL_TITLE2_FONT_SIZE':24,
 	'NORMAL_TITLE2_COLOR':(131,84,7,255),
 	
 	# 通用按钮
 	
 	'NORMAL_BUTTON_FONT':'杨任东竹石体-Regular',
-	'NORMAL_BUTTON_FONT_SIZE':18,
-	'NORMAL_BUTTON_COLOR':(255,255,255,255),
+	'NORMAL_BUTTON_FONT_SIZE':22,
+	'NORMAL_BUTTON_FONT_COLOR':(255,255,255,255),
 	'NORMAL_BUTTON_BACK':'button_v.png',
 	'NORMAL_BUTTON_PRESSED_BACK':'button_v_pressed.png',
+	'NORMAL_BUTTON_HOVER_COLOR':(252,232,200),
+	'NORMAL_BUTTON_COLOR':(255,255,255),
 	
 	'NORMAL_SWITCHBUTTON_BACK':'button_unselect.png',
 	'NORMAL_SWITCHBUTTON_SELECT_BACK':'button_select.png',
 	
+	'NORMAL_TAG_RV_IMAGE':'tag_rv.png',
+	'NORMAL_TAG_RV_SELECTED_IMAGE':'tag_rv_selected.png',
+	
+	
 	# 通用标签
 	
 	'NORMAL_LABEL_FONT':'杨任东竹石体-Regular',
-	'NORMAL_LABEL_FONT_SIZE':18,
+	'NORMAL_LABEL_FONT_SIZE':22,
 	'NORMAL_LABEL_COLOR':(131,84,7,255),
 	
 	# 通用信息框
 	
-	'NORMAL_MESSAGE_TEXT_STYLE':{'align':'center','color':(131,84,7,255),'font_name':'杨任东竹石体-Regular','font_size':18,'line_spacing':24,'wrap':'char'},
+	'NORMAL_MESSAGE_TEXT_STYLE':{'align':'center','color':(131,84,7,255),'font_name':'杨任东竹石体-Regular','font_size':22,'line_spacing':24,'wrap':'char'},
 	
 	# 通用选择框
 	
@@ -79,6 +104,12 @@
 	'NORMAL_SCROLLBAR_BACK':'scroll_back.png',
 	'NORMAL_SCROLLBAR_CURSOR':'scroll_cursor.png',
 	
+	# 通用窗口
+	
+	'NORMAL_ALERT_POS':((0.5,-150),(0.5,-120),(0,300),(0,240)),
+	'NORMAL_ALERT_NOTITLE_POS':((0.5,-150),(0.5,-100),(0,300),(0,200)),
+	'NORMAL_ALERT_BUTTON_TEXT':'确认',
+	
 	# 确认退出窗口
 	
 	'CONFIRM_QUIT_POS':((0.5,-118),(0.5,-79),(0,236),(0,158)),
@@ -86,23 +117,55 @@
 	'CONFIRM_QUIT_YES_TEXT':'是',
 	'CONFIRM_QUIT_NO_TEXT':'否',
 	
+	# 成就界面
+	
+	'ACHIEVEMENT_TAG_HEIGHT':50,
+	'ACHIEVEMENT_TAG_WIDTH':150,
+	'ACHIEVEMENT_TAG_PADDING':20,
+	
+	'ACHIEVEMENT_PAGE_TITLE':'成就',
+	'ACHIEVEMENT_PAGE_TITLE_POS':((0.5,0),(1,-50),(0,0),(0,0)),
+	
+	'ACHIEVEMENT_PAGE_CONFIRM_TEXT':'返回',
+	'ACHIEVEMENT_PAGE_CONFIRM_POS':((1,-120),(1,-50),(0,100),(0,30)),
+	
+	'ACHIEVEMENT_PAGE_ITEM_UNGOTTEN_COLOR':(127,127,127),
+	'ACHIEVEMENT_PAGE_ITEM_UNGOTTEN_HOVER_COLOR':(192,192,192),
+	
+	'ACHIEVEMENT_MESSAGE_GOTTEN_TITLE':'已获得成就',
+	'ACHIEVEMENT_MESSAGE_UNGOTTEN_TITLE':'尚未获得该成就',
+	
+	'ACHIEVEMENT_MESSAGE_POS':((0.5,-400),(0.5,-170),(0,800),(0,340)),
+	'ACHIEVEMENT_MESSAGE_ICON_POS':((0,20),(0,20),(0,300),(0,300)),
+	'ACHIEVEMENT_MESSAGE_TITLE_POS':((1,-250),(1,-30),(0,0),(0,0)),
+	'ACHIEVEMENT_MESSAGE_STATELABEL_POS':((1,-250),(1,-80),(0,0),(0,0)),
+	'ACHIEVEMENT_MESSAGE_TEXT_POS':((0,340),(0,50),(1,-360),(1,-150)),
+	'ACHIEVEMENT_MESSAGE_CONFIRM_POS':((1,-300),(0,20),(0,100),(0,30)),
+	
+	'ACHIEVEMENT_MESSAGE_CONFIRM_TEXT':'确认',
+	
 	# 附录界面
 	
 	'APPENDICE_PAGE_TITLE':'图鉴',
-	'APPENDICE_PAGE_TITLE_POS':((0.5,-210),(1,-50),(0,0),(0,0)),
+	'APPENDICE_PAGE_TITLE_POS':((0.5,-180),(1,-50),(0,0),(0,0)),
 	
 	'APPENDICE_PAGE_CONFIRM_TEXT':'返回',
-	'APPENDICE_PAGE_CONFIRM_POS':((0,20),(1,-50),(0,150),(0,30)),
+	'APPENDICE_PAGE_CONFIRM_POS':((0,20),(1,-50),(0,100),(0,30)),
 	
 	'APPENDICE_PAGE_INFO_POS':((0,20),(0,20),(1,-400),(1,-120)),
 	'APPENDICE_PAGE_SELECT_POS':((1,-360),(0,20),(0,340),(1,-40)),
 	
-	'APPENDICE_PAGE_INFO_ICON_POS':((0,20),(0,80),(0,320),(1,-100)),
-	'APPENDICE_PAGE_INFO_LABEL_POS':((0,170),(0,40),(0,0),(0,0)),
+	'APPENDICE_PAGE_INFO_ICON_POS':((0,20),(1,-340),(0,320),(0,320)),
+	'APPENDICE_PAGE_INFO_LABEL_POS':((0,170),(0.5,-160),(0,0),(0,0)),
 	'APPENDICE_PAGE_INFO_TEXT_POS':((0,360),(0,20),(1,-380),(1,-40)),
 	
 	'APPENDICE_PAGE_SELECT_SCROLL_POS':((1,-40),(0,20),(0,20),(1,-40)),
 	'APPENDICE_PAGE_SELECT_LIST_POS':((0,20),(0,20),(1,-70),(1,-40)),
+	
+	'APPENDICE_PAGE_SELECT_ITEM_HEIGHT':64,
+	'APPENDICE_PAGE_SELECT_ITEM_BLANKING':15,
+	
+	'APPENDICE_ITEMS_NONE_TEXT':'图鉴里还没有东西喔',
 	
 	# 设置窗口
 	
@@ -132,7 +195,7 @@
 	'SETTING_MENU_FULLSCREEN_POS':((0.5,-15),(0,150),(0,30),(0,30)),
 	'SETTING_MENU_FULLSCREEN_LABEL_POS':((0,20),(0,165),(0,0),(0,0)),
 	
-	'SETTING_MENU_SETDEFALUT_TEXT':'设为默认值',
+	'SETTING_MENU_SETDEFALUT_TEXT':'保存设置',
 	'SETTING_MENU_SETDEFALUT_POS':((0.5,-150),(0,80),(0,135),(0,40)),
 	
 	'SETTING_MENU_RESET_TEXT':'恢复默认',
@@ -142,7 +205,7 @@
 	
 	'ABOUT_PAGE_POS':((0.5,-354),(0.5,-236),(0,708),(0,472)),
 	'ABOUT_PAGE_TITLE':'关于',
-	'ABOUT_PAGE_TEXT':'''
+	'ABOUT_PAGE_TEXT':'''T
 {font_name '杨任东竹石体-Semibold'}{font_size 28}关于我们{font_size 12},
 
 
@@ -154,7 +217,7 @@
 	
 	'ABOUT_PAGE_CONFIRM_TEXT':'返回',
 	'ABOUT_PAGE_WATCH_ED_TEXT':'观看结束动画',
-	'ABOUT_PAGE_WATCH_ED_POS':((0,20),(1,-50),(0,150),(0,30)),
+	'ABOUT_PAGE_WATCH_ED_POS':((0,20),(1,-50),(0,200),(0,30)),
 	
 	# 主菜单
 	

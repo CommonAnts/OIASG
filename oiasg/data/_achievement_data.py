@@ -1,0 +1,20 @@
+{
+	'ACHIEVEMENT_DATA':{
+		0:{
+			'gotten':True,
+			'visible':True
+		},
+		1:{
+			'gotten':False,
+			'visible':True
+		},
+		2:{
+			'gotten':False,
+			'visible':True
+		},
+		3:{
+			'gotten':False,
+			'visible':False
+		}
+	}
+}
