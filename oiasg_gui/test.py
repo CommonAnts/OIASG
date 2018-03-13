@@ -29,6 +29,7 @@ def on_resize(width, height):
 # mv = pyglet.resource.media('tmp4.mp4', streaming=False)
 # mv.play()
 
+tbut_img = pyglet.resource.image('tbut.png')
 root.sons = [
 	controls.ImageFrame(
 		(window,0,0,800,600,root),
@@ -265,6 +266,7 @@ def onp():
 	alrt.button = None
 	msg1.doc = None
 	msg1.title = None
+	window.set_fullscreen(not window.fullscreen)
 	
 
 def onp1():
@@ -273,6 +275,7 @@ def onp1():
 	# button1.text = '11'
 	prog.rate = (prog.rate + 0.1 - (prog.rate + 0.1)// 1)
 	prog.text = '%.1f%%' % (prog.rate*100)
+	bgm_player.volume = prog.rate
 
 def onps():
 	print('pressed sbutton switch')
@@ -292,6 +295,10 @@ def onsubmit():
 	# msg1.hide()
 	# print(msg1.result)
 	
+@sld0.event
+def on_change(rate):
+	lbl.pos.x = (rate,0)
+	root.on_resize()
 button0.on_press = onp
 button1.on_press = onp1
 sbutton0.on_press = onps
