@@ -11,11 +11,11 @@ It also has a default GUI and basic OI strategy systems for the certain game pro
 
 OIASG is based on python 3 and [pyglet](http://pyglet.org/).
 
-We use modified(mainly debugging) pyglet 1.3.1 for windows.You can get the modifications form `/pyglet`.
+We use modified(mainly debugging) pyglet 1.4.0a1 for windows.You can get the modifications form `/pyglet`.
 
 **The game is chiefly for Windows 10,so it may not work well on other platforms(but this is not normal).**
 
-**Note that pyglet uses AVBin to decode medias.**
+**Note that pyglet1.4.0a1 uses FFmpeg to decode medias.**
 
 ## How to run OIASG
 
