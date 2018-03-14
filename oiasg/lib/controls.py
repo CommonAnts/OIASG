@@ -36,9 +36,8 @@ class Control(pyglet.event.EventDispatcher):
 	# x,y:控件位置
 	# width,height:控件大小
 	# visible:是否在显示
-	def __init__(self, window = None, parent = None, pos = Posattr(), x = 0, y = 0, width = 1, height = 1, absx = None, absy = None, abswidth = None, absheight = None, opacity = False):
+	def __init__(self, window = None, pos = Posattr(), x = 0, y = 0, width = 1, height = 1, absx = None, absy = None, abswidth = None, absheight = None, opacity = False):
 		super(Control, self).__init__()
-		# parent:控件的上级
 		self.opacity = opacity
 		self.visible = False
 		self.sons = []
@@ -51,7 +50,6 @@ class Control(pyglet.event.EventDispatcher):
 		self.absy = absy
 		self.abswidth = abswidth
 		self.absheight = absheight
-		self.parent = parent
 		self.pos = pos
 	# 碰撞检测：坐标是否在控件的矩形区域之内（严格）
 	def set_abspos(self,abspos):
@@ -778,12 +776,12 @@ class ImageLayoutFrame(ImageFrame,LayoutFrame):
 		super(ImageLayoutFrame, self).__init__(control,back,front)
 		self.layouter = layouter
 			
-def ScrollTextBox_defaultlayout_gen(SCROLL_BAR_WIDTH = 20):
+def ScrollTextBox_defaultlayout_gen(SCROLL_BAR_WIDTH = 20, COVER = False):
 	def f(self):
 		if self.scrollbar is not None:
 			self.scrollbar.pos = Posattr((1,-SCROLL_BAR_WIDTH),(0,0),(0,SCROLL_BAR_WIDTH),(1,0))
 		if self.doc is not None:
-			self.doc.pos = Posattr((0,0),(0,0),(1,-SCROLL_BAR_WIDTH),(1,0))
+			self.doc.pos = Posattr((0,0),(0,0),(1,0 if COVER else -SCROLL_BAR_WIDTH),(1,0))
 	return f
 ScrollTextBox_defaultlayout = ScrollTextBox_defaultlayout_gen()
 
@@ -791,18 +789,20 @@ ScrollTextBox_defaultlayout = ScrollTextBox_defaultlayout_gen()
 # 需要保证doc在scrollbar之前设置
 class ScrollTextBox(LayoutFrame):
 	def __init__(self, control, doc = None, scrollbar = None, layouter = ScrollTextBox_defaultlayout):
-		super(ScrollTextBox, self).__init__(control)
 		self._layouter = layouter
 		self._doc = doc
 		self._scrollbar = scrollbar
+		super(ScrollTextBox, self).__init__(control)
 		self.doc = doc
 		self.scrollbar = scrollbar
 		self.layouter = layouter
 		self.on_resize()
+		self.check_scroll()
 	iskey = lambda self, x: x is self.scrollbar or x is self.doc
 	def set_text(self,x):
 		if self.doc is not None:
 			self.doc.text = x
+		self.check_scroll()
 	text = property(lambda self:self.doc.text if self.doc is not None else None,set_text)
 	def set_doc(self,doc):
 		self._doc = doc
@@ -814,6 +814,7 @@ class ScrollTextBox(LayoutFrame):
 				self.check_scroll()
 		self.sons = list(filter(self.iskey,self.sons))
 		self.relayout()
+		self.check_scroll()
 	doc = property(lambda self:self._doc, set_doc)
 	def set_scrollbar(self,scrollbar):
 		self._scrollbar = scrollbar
@@ -826,6 +827,7 @@ class ScrollTextBox(LayoutFrame):
 					self.doc.layout.ensure_line_visible(min(max(int(rate*self.doc.layout.get_line_count()),0),self.doc.layout.get_line_count()-1))
 		self.sons = list(filter(self.iskey,self.sons))
 		self.relayout()
+		self.check_scroll()
 	scrollbar = property(lambda self:self._scrollbar,set_scrollbar)
 	def check_scroll(self):
 		# 判定滚动条是否需要
@@ -847,13 +849,16 @@ class ScrollTextBox(LayoutFrame):
 			i.show()
 		self.visible = True
 		self.check_scroll()
+	def on_resize(self):
+		super(LayoutFrame, self).on_resize()
+		self.check_scroll()
 
-def ScrollFrame_defaultlayout_gen(SCROLL_BAR_WIDTH = 20):
+def ScrollFrame_defaultlayout_gen(SCROLL_BAR_WIDTH = 20, COVER = True):
 	def f(self):
 		if self.scrollbar is not None:
 			self.scrollbar.pos = Posattr((1,-SCROLL_BAR_WIDTH),(0,0),(0,SCROLL_BAR_WIDTH),(1,0))
 		if self._viewport is not None:
-			self._viewport.pos = Posattr((0,0),(0,0),(1,-SCROLL_BAR_WIDTH),(1,0))
+			self._viewport.pos = Posattr((0,0),(0,0),(1,0 if COVER else -SCROLL_BAR_WIDTH),(1,0))
 	return f
 ScrollFrame_defaultlayout = ScrollFrame_defaultlayout_gen()
 
@@ -862,16 +867,17 @@ ScrollFrame_defaultlayout = ScrollFrame_defaultlayout_gen()
 # 需要保证frame在scrollbar之前设置
 class ScrollFrame(LayoutFrame):
 	def __init__(self, control, frame = None, scrollbar = None, layouter = ScrollFrame_defaultlayout):
-		super(ScrollFrame, self).__init__(control)
 		self._viewport = Viewport((control[0],self))
-		self.sons.append(self._viewport)
 		self._scrollbar = scrollbar
 		self._frame = frame
 		self._layouter = layouter
+		super(ScrollFrame, self).__init__(control)
+		self.sons.append(self._viewport)
 		self.scrollbar = scrollbar
 		self.frame = frame
 		self.layouter = layouter
 		self.on_resize()
+		self.check_scroll()
 	isselfframe = lambda self, x: x is self.frame
 	iskey = lambda self, x: x is self.scrollbar or x is self._viewport
 	def set_frame(self,frame):
@@ -882,6 +888,7 @@ class ScrollFrame(LayoutFrame):
 			frame.pos = Posattr()
 		self._viewport.sons = list(filter(self.isselfframe,self._viewport.sons))
 		self.relayout()
+		self.check_scroll()
 	frame = property(lambda self:self._frame, set_frame)
 	def set_scrollbar(self,scrollbar):
 		self._scrollbar = scrollbar
@@ -903,17 +910,44 @@ class ScrollFrame(LayoutFrame):
 					_viewport_setbase(1-rate)
 		self.sons = list(filter(self.iskey,self.sons))
 		self.relayout()
+		self.check_scroll()
 	scrollbar = property(lambda self:self._scrollbar,set_scrollbar)
-
+	def check_scroll(self):
+		# 判定滚动条是否需要
+		if self.scrollbar is None:
+			return
+		if self.frame is None:
+			self.scrollbar.hide()
+		# 比较行基线 -- 可能会导致末尾行显示不全（因为基线不在行下方），待解决
+		if self._viewport.height >= self.frame.height and self.scrollbar.rate == 0:
+			if self.scrollbar.visible:
+				self.scrollbar.hide()
+		else:
+			if self.visible and not self.scrollbar.visible:
+				self.scrollbar.show()
+	def show(self):
+		# on_show在初始时触发
+		self.dispatch_event('on_show')
+		for i in self.sons:
+			i.show()
+		self.visible = True
+		self.check_scroll()
+	def on_resize(self):
+		super(LayoutFrame, self).on_resize()
+		self.check_scroll()
+		
 def ButtonSlider_defaultlayout_gen(PADDING_RATE = 0.2, HPADDING_RATE = 0.5, VPADDING_RATE = 0.15):
 	def f(self):
-		rate = 1/(len(self.sons)*(1+PADDING_RATE)-PADDING_RATE+2*HPADDING_RATE)
-		padding_rate = PADDING_RATE * rate
-		hpadding_rate = HPADDING_RATE * rate
-		cur_t = hpadding_rate
-		for i in self.sons:
-			i.pos = Posattr((cur_t,0),(VPADDING_RATE,0),(rate,0),(1-VPADDING_RATE*2,0))
-			cur_t += rate + padding_rate
+		if len(self.sons) == 0:
+			return
+		else:
+			rate = 1/(len(self.sons)*(1+PADDING_RATE)-PADDING_RATE+2*HPADDING_RATE)
+			padding_rate = PADDING_RATE * rate
+			hpadding_rate = HPADDING_RATE * rate
+			cur_t = hpadding_rate
+			for i in self.sons:
+				i.pos = Posattr((cur_t,0),(VPADDING_RATE,0),(rate,0),(1-VPADDING_RATE*2,0))
+				cur_t += rate + padding_rate
 	return f
 ButtonSlider_defaultlayout = ButtonSlider_defaultlayout_gen()
 	
@@ -1269,7 +1303,7 @@ class Form(pyglet.window.Window):
 	def __init__(self, width=None, height=None, caption=None, resizable=False, style=None, fullscreen=False, visible=True, vsync=True, display=None, screen=None, config=None, context=None, mode=None):
 		super(Form, self).__init__(width, height, caption, resizable, style, fullscreen, visible, vsync, display, screen, config, context, mode)
 		
-		self.root_control = Frame((self,None,Posattr(),0,0,width,height))
+		self.root_control = Frame((self,Posattr(),0,0,width,height))
 		# self.root_control.capture_events()
 	def on_draw(self):
 		pyglet.gl.glClearColor(1, 1, 1, 1)

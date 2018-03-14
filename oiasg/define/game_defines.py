@@ -8,7 +8,7 @@
 			# 游戏结束时间
 			'end_time':datetime.datetime(2018,1,1,0),
 			# 正常情况下的时间变化量（比赛等特殊情况除外）
-			'time_delta':datetime.timedelta(hours = 8),
+			'time_delta':datetime.timedelta(hours = 1),
 		}
 	}
 }

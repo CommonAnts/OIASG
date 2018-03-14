@@ -197,12 +197,14 @@ class Data(object):
 		return res
 	def get_all_list(self, key_seq):
 		t = self.get_all(key_seq)
+		t.reverse()
 		res = []
 		for i in t:
 			res += i
 		return res
 	def get_all_dict(self, key_seq):
 		t = self.get_all(key_seq)
+		t.reverse()
 		res = {}
 		for i in t:
 			res.update(i)
