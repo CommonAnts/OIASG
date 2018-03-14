@@ -365,21 +365,16 @@
 		'GAME_PAGE_HEADER_RATING_BAR_POS':((0.5,70),(0,0),(0.335,-170),(1,0)),
 		'GAME_PAGE_HEADER_RATING_BAR_DEFAULT_COLOR':(255,255,255),
 		
-		'GAME_HEADER_BAR_HEALTH_COLOR':(127,255,127),
-		'GAME_HEADER_BAR_MOOD_COLOR':(127,127,255),
-		'GAME_HEADER_BAR_STRESS_COLOR':(255,127,127),
-		'GAME_HEADER_BAR_ABILITY_COLOR':(192,192,127),
+		'GAME_HEADER_STATUS_BAR_COUNT':4,
 		
-		'GAME_HEADER_BAR_HEALTH_ICON':'health_icon.png',
-		'GAME_HEADER_BAR_MOOD_ICON':'mood_icon.png',
-		'GAME_HEADER_BAR_STRESS_ICON':'stress_icon.png',
-		'GAME_HEADER_BAR_ABILITY_ICON':'ability_icon.png',
+		'GAME_HEADER_STATUS_BAR_COLORS':((127,255,127),(127,127,255),(255,127,127),(192,192,127)),
 		
-		'GAME_HEADER_CHARACTER_ICON':'character.png',
-		'GAME_HEADER_TIMETABLE_ICON':'timetable.png',
-		'GAME_HEADER_ABILITY_ICON':'ability.png',
-		'GAME_HEADER_CONTEST_ICON':'contest.png',
-		'GAME_HEADER_CONTEST_DISABLED_ICON':'contest_disabled.png',
+		'GAME_HEADER_STATUS_BAR_ICONS':('health_icon.png','mood_icon.png','stress_icon.png','ability_icon.png'),
+		
+		'GAME_HEADER_STATUS_SWITCHPAGE_COUNT':4,
+		
+		'GAME_HEADER_SWITCHPAGE_ICONS':('character.png','timetable.png','ability.png','contest.png'),
+		'GAME_HEADER_SWITCHPAGE_DISABLED_ICONS':(None,None,None,'contest_disabled.png'),
 		'GAME_HEADER_SWITCHPAGE_BUTTON_SELECT_BACK':'switchpage_button_select.png',
 		
 		'GAME_PAGES_POS':((0,0),(0,0),(1,0),(0.94,1)),

@@ -7,6 +7,7 @@ import pyglet
 from .controls import *
 from .game import *
 from .data import *
+from .uidata import *
 
 class UI(pyglet.event.EventDispatcher):
 	# 用户界面（单类）
@@ -112,16 +113,10 @@ class UI(pyglet.event.EventDispatcher):
 		game_pages_ability_back = resource.load_image(GAME_PAGES_ABILITY_BACK)
 		game_pages_contest_back = resource.load_image(GAME_PAGES_CONTEST_BACK)
 		
-		game_header_bar_health_icon = resource.load_image(GAME_HEADER_BAR_HEALTH_ICON)
-		game_header_bar_mood_icon = resource.load_image(GAME_HEADER_BAR_MOOD_ICON)
-		game_header_bar_stress_icon = resource.load_image(GAME_HEADER_BAR_STRESS_ICON)
-		game_header_bar_ability_icon = resource.load_image(GAME_HEADER_BAR_ABILITY_ICON)
+		game_header_status_bar_icons = [resource.load_image(i) for i in GAME_HEADER_STATUS_BAR_ICONS]
 		
-		game_header_character_icon = resource.load_image(GAME_HEADER_CHARACTER_ICON)
-		game_header_timetable_icon = resource.load_image(GAME_HEADER_TIMETABLE_ICON)
-		game_header_ability_icon = resource.load_image(GAME_HEADER_ABILITY_ICON)
-		game_header_contest_icon = resource.load_image(GAME_HEADER_CONTEST_ICON)
-		game_header_contest_disabled_icon = resource.load_image(GAME_HEADER_CONTEST_DISABLED_ICON)
+		game_header_switchpage_icons = [resource.load_image(i) for i in GAME_HEADER_SWITCHPAGE_ICONS]
+		game_header_switchpage_disabled_icons = [(resource.load_image(i) if i is not None else None) for i in GAME_HEADER_SWITCHPAGE_DISABLED_ICONS]
 		game_header_switchpage_button_select_back = resource.load_image(GAME_HEADER_SWITCHPAGE_BUTTON_SELECT_BACK)
 		
 		class Middle_Posattr(Posattr):
@@ -414,35 +409,7 @@ class UI(pyglet.event.EventDispatcher):
 				@self.event
 				def on_submit():
 					self.end()
-		# UI数据：从define的某个字典项读取数据并生成UI数据（仅外观）
-		class UIData(object):
-			def __init__(self, data):
-				key, value = data
-				self.__dict__.update(value)
-				self.key = key
-				self._built_control = False
-			def build_control(self):
-				pass
-			@property
-			def control(self):
-				# 生成控件
-				if not self._built_control:
-					self._control = self.build_control()
-					self._built_control = True
-				return self._control
-		# 静态UI数据集：静态（类）存储的UI数据
-		class UIDataStaticSet(object):
-			@classmethod
-			def build_dataset(cls):
-				pass
-			@classmethod
-			def dataset(cls):
-				# 生成控件
-				if not cls._built_dataset:
-					cls._dataset = cls.build_dataset()
-					cls._built_dataset = True
-				return cls._dataset
-				
+		
 		# 成就的UI数据
 		class AchievementItem_UIData(UIData):
 			def build_control(self):
@@ -638,6 +605,7 @@ class UI(pyglet.event.EventDispatcher):
 						self.info_label.text = ''
 						self.info_text.doc.doc = ''
 					self.info.refresh()
+				self.select_list_buttons.button = 0
 				self.on_resize()
 		
 		class ScenarioItem_UIData(UIData):
@@ -754,6 +722,7 @@ class UI(pyglet.event.EventDispatcher):
 						self.info_label.text = ''
 						self.info_text.doc.doc = ''
 					self.info.refresh()
+				self.select_list_buttons.button = 0
 				self.on_resize()
 				
 		# 主菜单
@@ -1070,7 +1039,7 @@ class UI(pyglet.event.EventDispatcher):
 				self.version_box.text = version.name_to_str()
 			version = property(lambda self:self._version,set_version)
 			def set_save_data(self, data):
-				self.version = data.get('GAME_VERSION',GameVersion())
+				self.version = data.get('game_version',GameVersion())
 			save_data = property(lambda self:self._save_data,set_save_data)
 		class GamePageMenu(MessageInteractor, UIControl):
 			def __init__(self, gamepage):
@@ -1129,7 +1098,7 @@ class UI(pyglet.event.EventDispatcher):
 		class GamePage(Frame,UIControl):
 			def __init__(self, gamedata, load_from_save = False):
 				super(GamePage,self).__init__([window])
-				game = GamePlay(ui.data, ui, self, gamedata, load_from_save)
+				game = GamePlay(ui.data, ui, gamedata, load_from_save)
 				self.game = game
 				gamepage = self
 				
@@ -1154,16 +1123,14 @@ class UI(pyglet.event.EventDispatcher):
 								slider.val = 0
 								@slider.event
 								def on_change(val):
-									game.game_speed = val
+									gamepage.set_speed(val)
 								
 								label = Label((window,Middle_Posattr()),pyglet.text.Label('',font_name = GAME_PAGE_HEADER_SPEEDBAR_FONT,font_size = GAME_PAGE_HEADER_SPEEDBAR_FONT_SIZE,color = GAME_PAGE_HEADER_SPEEDBAR_FONT_COLOR, anchor_x = 'center',anchor_y = 'center'))
 								self.label = label
 								self.sons.append(label)
-							def refresh_label(self):
-								self.label.text = (GAME_PAGE_HEADER_SPEEDBAR_PAUSE_TEXT if game.game_speed == 0 else '') + game.time.strftime(GAME_PAGE_HEADER_SPEEDBAR_TIME_FORMAT)
-							def set_speed(self, v):
-								self.slider._set_val(v)
-								self.refresh_label()
+							def refresh(self):
+								self.slider._set_val(game.speed)
+								self.label.text = (GAME_PAGE_HEADER_SPEEDBAR_PAUSE_TEXT if game.speed == 0 else '') + game.time.strftime(GAME_PAGE_HEADER_SPEEDBAR_TIME_FORMAT)
 						speedbar = SpeedBar()
 						self.speedbar = speedbar
 						self.sons.append(speedbar)
@@ -1181,16 +1148,7 @@ class UI(pyglet.event.EventDispatcher):
 											disabled_image = Sprite(disabled_image)
 										super(SwitchPageButton,self).__init__([window], icons = [icon,icon], images = [None,selected_image], disabled_images = None if disabled_image is None else [disabled_image,disabled_image], direction = 4)
 										
-								character_button = SwitchPageButton(game_header_character_icon)
-								self.character_button = character_button
-								timetable_button = SwitchPageButton(game_header_timetable_icon)
-								self.timetable_button = timetable_button
-								ability_button = SwitchPageButton(game_header_ability_icon)
-								self.ability_button = ability_button
-								contest_button = SwitchPageButton(game_header_contest_icon, game_header_contest_disabled_icon)
-								self.contest_button = contest_button
-								
-								self.buttons = (character_button, timetable_button, ability_button, contest_button)
+								self.buttons = [SwitchPageButton(game_header_switchpage_icons[i], game_header_switchpage_disabled_icons[i]) for i in range(GAME_HEADER_STATUS_SWITCHPAGE_COUNT)]
 								@self.event
 								def on_switch(id):
 									gamepage.pages.page = id
@@ -1224,16 +1182,8 @@ class UI(pyglet.event.EventDispatcher):
 										super(StatusIconBar, self).draw(range)
 										if self.icon is not None:
 											self.icon.draw()
-								health_bar = StatusIconBar(game_header_bar_health_icon, GAME_HEADER_BAR_HEALTH_COLOR)
-								self.health_bar = health_bar
-								mood_bar = StatusIconBar(game_header_bar_mood_icon, GAME_HEADER_BAR_MOOD_COLOR)
-								self.mood_bar = mood_bar
-								stress_bar = StatusIconBar(game_header_bar_stress_icon, GAME_HEADER_BAR_STRESS_COLOR)
-								self.stress_bar = stress_bar
-								ability_bar = StatusIconBar(game_header_bar_ability_icon, GAME_HEADER_BAR_ABILITY_COLOR)
-								self.ability_bar = ability_bar
 					
-								self.sons = (health_bar, mood_bar, stress_bar, ability_bar)
+								self.sons = [StatusIconBar(game_header_status_bar_icons[i], GAME_HEADER_STATUS_BAR_COLORS[i]) for i in range(GAME_HEADER_STATUS_BAR_COUNT)]
 								self.relayout()
 								
 						status_bars = StatusIconBars(GAME_PAGE_HEADER_STATUS_BARS_POS)
@@ -1298,22 +1248,24 @@ class UI(pyglet.event.EventDispatcher):
 				self.pages = pages
 				self.sons.append(pages)
 				
-				game.init_data()
+				@game.event
+				def on_update_speed_time():
+					self.refresh_speed_time()
 			def set_speed(self, v):
-				self.header.speedbar.set_speed(v)
-			def refresh_time(self):
-				self.header.speedbar.refresh_label()
+				self.game.speed = v
+			def refresh_speed_time(self):
+				self.header.speedbar.refresh()
 			def refresh(self):
-				pass
+				self.refresh_speed_time()
 				# 刷新UI
 			def exe(self):
 				# 使用类名调用父类函数 -- 注意
 				UIControl.exe(self)
-				self.game.play()
+				self.game._play()
 				
 		def play_game_from_scenario(scenario):
 			gamedata = data.get(['GAME_DEFINE',scenario.game_define])
-			gamedata['SCENARIO_NAME'] = scenario.name
+			gamedata['scenario'] = scenario.key
 			GamePage(gamedata,False).exe()
 		def play_game_from_save(save_data):
 			GamePage(save_data,True).exe()
@@ -1339,4 +1291,5 @@ class UI(pyglet.event.EventDispatcher):
 				fps_display.draw()
 			window.on_draw = window_on_draw
 		
-		self.__dict__.update(locals())
+		self.__dict__.update({key:value for key,value in locals().items() if key != 'self'})
+		

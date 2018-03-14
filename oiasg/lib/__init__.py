@@ -1,1 +1,1 @@
-__all__ = ['ui','controls','data','resource','game']
+__all__ = ['ui','uidata','controls','data','resource','game']

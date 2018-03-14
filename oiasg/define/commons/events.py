@@ -1,3 +1,9 @@
 {
-	'EVENTS':{}
+	'EVENTS':{
+		0:{
+			'trigger':'True',
+			'effect':'cnt+=1;ui.Alert_Notitle(str(cnt)).exe()',
+			'privilege':0
+		}
+	}
 }

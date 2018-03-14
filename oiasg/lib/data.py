@@ -70,8 +70,11 @@ class DataSet(object):
 	def load(self):
 		files = FileSystemIO.get_py_paths(self.PATH)
 		self.data = []
+		self._data_value = []
 		for file in files:
-			self.data.append((file,DataFileIO.get_file(file)))
+			file_data = DataFileIO.get_file(file)
+			self.data.append((file,file_data))
+			self._data_value.append(file_data)
 	def get(self,key_seq,default = None):
 		for i in self.data:
 			d = i[1]
@@ -104,8 +107,8 @@ class DataSet(object):
 				d[key_seq[-1]] = value
 				return True
 		return False
-	def checksum(self):	
-		return _md5_checksum(self.data)
+	def checksum(self):
+		return _md5_checksum(self._data_value)
 
 class GameVersion(object):
 	def __init__(self, data = None):
@@ -150,7 +153,7 @@ class Data(object):
 		self.dlcs = self._get_dlcs()
 		self._version = None
 	def _self_md5_checksum(self):
-		return _md5_checksum(self.define)
+		return self.define.checksum()
 	def _package_name(self):
 		return self.define.get(['PACKAGE_NAME'],'')
 	@property
