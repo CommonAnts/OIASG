@@ -5,52 +5,43 @@ import datetime
 import pyglet
 
 from .controls import *
-from .game import *
 from .data import *
 from .uidata import *
+from . import game
 
 class UI(pyglet.event.EventDispatcher):
 	# 用户界面（单类）
 	def init_settings(self):
-		self.fullscreen = self.data.get(['FULLSCREEN'])
-		self.volume_music = self.data.get(['VOLUME_MUSIC'])
-		self.volume_effect = self.data.get(['VOLUME_EFFECT'])
-		self.volume_game = self.data.get(['VOLUME_GAME'])
+		self.fullscreen = data.get(['FULLSCREEN'])
+		self.volume_music = data.get(['VOLUME_MUSIC'])
+		self.volume_effect = data.get(['VOLUME_EFFECT'])
+		self.volume_game = data.get(['VOLUME_GAME'])
 	def reset_settings(self):
-		self.fullscreen = self.data.get(['FULLSCREEN_DEFAULT'])
-		self.volume_music = self.data.get(['VOLUME_MUSIC_DEFAULT'])
-		self.volume_effect = self.data.get(['VOLUME_EFFECT_DEFAULT'])
-		self.volume_game = self.data.get(['VOLUME_GAME_DEFAULT'])
+		self.fullscreen = data.get(['FULLSCREEN_DEFAULT'])
+		self.volume_music = data.get(['VOLUME_MUSIC_DEFAULT'])
+		self.volume_effect = data.get(['VOLUME_EFFECT_DEFAULT'])
+		self.volume_game = data.get(['VOLUME_GAME_DEFAULT'])
 	def set_fullscreen(self,v):
 		self.window.set_fullscreen(v)
-		self.data.set(['FULLSCREEN'],v)
+		data.set(['FULLSCREEN'],v)
 	fullscreen = property(lambda self:self.window.fullscreen,set_fullscreen)
 	def set_volume_music(self,v):
 		self._volume_music = v
-		self.data.set(['VOLUME_MUSIC'],v)
+		data.set(['VOLUME_MUSIC'],v)
 	volume_music = property(lambda self:self._volume_music,set_volume_music)
 	def set_volume_effect(self,v):
 		self._volume_effect = v
-		self.data.set(['VOLUME_EFFECT'],v)
+		data.set(['VOLUME_EFFECT'],v)
 		# update volume
 	volume_effect = property(lambda self:self._volume_effect,set_volume_effect)
 	def set_volume_game(self,v):
 		self._volume_game = v
-		self.data.set(['VOLUME_GAME'],v)
+		data.set(['VOLUME_GAME'],v)
 		# update volume
 	volume_game = property(lambda self:self._volume_game,set_volume_game)
 	def show(self):
 		self.window.show()
-	def __init__(self,gameobj):
-		data = gameobj.data
-		resource = gameobj.resource
-		saves = gameobj.saves
-		self.data = data
-		self.resource = resource
-		self.saves = saves
-		
-		ui = self
-		
+	def init(self):
 		globals().update(data.get_all_dict(['UI'])) # 引入命名空间
 		
 		window = Form(960,540,caption = CAPTION,resizable = True)
@@ -98,15 +89,16 @@ class UI(pyglet.event.EventDispatcher):
 		normal_tag_rv_selected_back = resource.load_image(NORMAL_TAG_RV_SELECTED_IMAGE)
 		normal_progress_bar_front = resource.load_image(NORMAL_PROGRESS_BAR_FRONT)
 		normal_progress_bar_back = resource.load_image(NORMAL_PROGRESS_BAR_BACK)
+		normal_message_back = resource.load_image(NORMAL_MESSAGE_BACK)
 		
 		main_menu_back = resource.load_image(MAIN_MENU_BACK)
 		main_menu_start_back = resource.load_image(MAIN_MENU_START_BACK)
 		main_menu_start_pressed_back = resource.load_image(MAIN_MENU_START_PRESSED_BACK)
 		
-		game_page_header_back = resource.load_image(GAME_PAGE_HEADER_BACK)
-		# game_page_header_speedbar_back = resource.load_image(GAME_PAGE_HEADER_SPEEDBAR_BACK)
-		game_page_header_speedbar_button_back = resource.load_image(GAME_PAGE_HEADER_SPEEDBAR_BUTTON_BACK)
-		game_page_header_speedbar_pressed_back = resource.load_image(GAME_PAGE_HEADER_SPEEDBAR_BUTTON_PRESSED_BACK)
+		game_header_back = resource.load_image(GAME_HEADER_BACK)
+		# game_header_speedbar_back = resource.load_image(GAME_HEADER_SPEEDBAR_BACK)
+		game_header_speedbar_button_back = resource.load_image(GAME_HEADER_SPEEDBAR_BUTTON_BACK)
+		game_header_speedbar_pressed_back = resource.load_image(GAME_HEADER_SPEEDBAR_BUTTON_PRESSED_BACK)
 		
 		game_pages_character_back = resource.load_image(GAME_PAGES_CHARACTER_BACK)
 		game_pages_timetable_back = resource.load_image(GAME_PAGES_TIMETABLE_BACK)
@@ -119,36 +111,46 @@ class UI(pyglet.event.EventDispatcher):
 		game_header_switchpage_disabled_icons = [(resource.load_image(i) if i is not None else None) for i in GAME_HEADER_SWITCHPAGE_DISABLED_ICONS]
 		game_header_switchpage_button_select_back = resource.load_image(GAME_HEADER_SWITCHPAGE_BUTTON_SELECT_BACK)
 		
+		game_header_switch_down_icon = resource.load_image(GAME_HEADER_SWITCH_DOWN_ICON)
+		game_header_switch_up_icon = resource.load_image(GAME_HEADER_SWITCH_UP_ICON)
+		
+		game_board_back = resource.load_image(GAME_BOARD_BACK)
+		
+		game_message_timetable_back = resource.load_image(GAME_MESSAGE_TIMETABLE_BACK)
+		game_message_log_back = resource.load_image(GAME_MESSAGE_LOG_BACK)
+		game_message_strategy_back = resource.load_image(GAME_MESSAGE_STRATEGY_BACK)
+		game_message_strategy_select_back = resource.load_image(GAME_MESSAGE_STRATEGY_SELECT_BACK)
+		
 		class Middle_Posattr(Posattr):
 			def __init__(self):
-				super(Middle_Posattr,self).__init__((0.5,0),(0.5,0),(0,0),(0,0))
+				super().__init__((0.5,0),(0.5,0),(0,0),(0,0))
 		class Normal_ButtonLabel(pyglet.text.Label):
 			def __init__(self, text):
-				super(Normal_ButtonLabel,self).__init__(text,font_name = NORMAL_BUTTON_FONT,font_size = NORMAL_BUTTON_FONT_SIZE,color = NORMAL_BUTTON_FONT_COLOR,anchor_x = 'center',anchor_y = 'center')
+				super().__init__(text,font_name = NORMAL_BUTTON_FONT,font_size = NORMAL_BUTTON_FONT_SIZE,color = NORMAL_BUTTON_FONT_COLOR,anchor_x = 'center',anchor_y = 'center')
 		class Normal_ValueLabel(pyglet.text.Label):
 			def __init__(self, text):
-				super(Normal_ValueLabel,self).__init__(text,font_name = NORMAL_VALUE_FONT,font_size = NORMAL_VALUE_FONT_SIZE,color = NORMAL_VALUE_FONT_COLOR,anchor_x = 'center',anchor_y = 'center')
+				super().__init__(text,font_name = NORMAL_VALUE_FONT,font_size = NORMAL_VALUE_FONT_SIZE,color = NORMAL_VALUE_FONT_COLOR,anchor_x = 'center',anchor_y = 'center')
 		class Normal_Title0(Label):
 			def __init__(self,text,pos = DEFAULT_POS):
-				super(Normal_Title0,self).__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE0_FONT,font_size = NORMAL_TITLE0_FONT_SIZE,color = NORMAL_TITLE0_COLOR, anchor_x = 'center',anchor_y = 'center'))
+				super().__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE0_FONT,font_size = NORMAL_TITLE0_FONT_SIZE,color = NORMAL_TITLE0_COLOR, anchor_x = 'center',anchor_y = 'center'))
 		class Normal_Title(Label):
 			def __init__(self,text,pos = DEFAULT_POS):
-				super(Normal_Title,self).__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE_FONT,font_size = NORMAL_TITLE_FONT_SIZE,color = NORMAL_TITLE_COLOR, anchor_x = 'center',anchor_y = 'center'))
+				super().__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE_FONT,font_size = NORMAL_TITLE_FONT_SIZE,color = NORMAL_TITLE_COLOR, anchor_x = 'center',anchor_y = 'center'))
 		class Normal_Title2(Label):
 			def __init__(self,text,pos = DEFAULT_POS):
-				super(Normal_Title2,self).__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE2_FONT,font_size = NORMAL_TITLE2_FONT_SIZE,color = NORMAL_TITLE2_COLOR, anchor_x = 'center',anchor_y = 'center'))
+				super().__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_TITLE2_FONT,font_size = NORMAL_TITLE2_FONT_SIZE,color = NORMAL_TITLE2_COLOR, anchor_x = 'center',anchor_y = 'center'))
 		class Normal_Label(Label):
-			def __init__(self,text,pos = DEFAULT_POS):
-				super(Normal_Label,self).__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_LABEL_FONT,font_size = NORMAL_LABEL_FONT_SIZE,color = NORMAL_LABEL_COLOR, anchor_x = 'left',anchor_y = 'center'))
+			def __init__(self,text,pos = DEFAULT_POS, anchor_x = 'left'):
+				super().__init__((window,Posattr(*pos)),pyglet.text.Label(text,font_name = NORMAL_LABEL_FONT,font_size = NORMAL_LABEL_FONT_SIZE,color = NORMAL_LABEL_COLOR, anchor_x = anchor_x,anchor_y = 'center'))
 		class Normal_MessageText(TextBox):
 			def __init__(self,text,pos = DEFAULT_POS):
-				super(Normal_MessageText,self).__init__((window,Posattr(*pos)),text,NORMAL_MESSAGE_TEXT_STYLE,multiline = True)
+				super().__init__((window,Posattr(*pos)),text,NORMAL_MESSAGE_TEXT_STYLE,multiline = True)
 		class Normal_TextInput(TextBox):
 			def __init__(self, text, pos = DEFAULT_POS):
-				super(Normal_TextInput,self).__init__((window, Posattr(*pos)),text,NORMAL_INPUT_TEXT_STYLE,editable = True,multiline = False,select_backcolor = NORMAL_INPUT_TEXT_SELECT_BACKCOLOR, select_textcolor = NORMAL_INPUT_TEXT_SELECT_TEXTCOLOR, caret_color = NORMAL_INPUT_TEXT_SELECT_CARETCOLOR)
+				super().__init__((window, Posattr(*pos)),text,NORMAL_INPUT_TEXT_STYLE,editable = True,multiline = False,select_backcolor = NORMAL_INPUT_TEXT_SELECT_BACKCOLOR, select_textcolor = NORMAL_INPUT_TEXT_SELECT_TEXTCOLOR, caret_color = NORMAL_INPUT_TEXT_SELECT_CARETCOLOR)
 		class Normal_Button(Button):
 			def __init__(self, labeltext, pos = DEFAULT_POS):
-				super(Normal_Button,self).__init__(
+				super().__init__(
 					(window,Posattr(*pos)),
 					label = Normal_ButtonLabel(labeltext),
 					image = Sprite(normal_button_back),
@@ -158,14 +160,14 @@ class UI(pyglet.event.EventDispatcher):
 				)
 		class Normal_Slider(Slider):
 			def __init__(self, pos = DEFAULT_POS):
-				super(Normal_Slider, self).__init__(
+				super().__init__(
 					(window,Posattr(*pos)),
 					image = Sprite(normal_slider_back),
 					cursor = Sprite(normal_slider_cursor)
 				)
 		class Normal_Checkbox(SwitchButton):
 			def __init__(self, pos = DEFAULT_POS):
-				super(Normal_Checkbox,self).__init__(
+				super().__init__(
 					(window, Posattr(*pos)),
 					images = (
 						Sprite(normal_checkbox_unchecked_back),
@@ -176,14 +178,14 @@ class UI(pyglet.event.EventDispatcher):
 				)
 		class Normal_FormattedText(FormattedTextBox):
 			def __init__(self, text,pos = DEFAULT_POS):
-				super(Normal_FormattedText, self).__init__((window,Posattr(*pos)),resource.decode_text(text),multiline = True)
+				super().__init__((window,Posattr(*pos)),resource.decode_text(text),multiline = True)
 		class Normal_ScrollBar(ScrollBar):
 			def __init__(self, pos = DEFAULT_POS):
-				super(Normal_ScrollBar,self).__init__((window,Posattr(*pos)), image = Sprite(normal_scrollbar_back), cursor = Sprite(normal_scrollbar_cursor))
+				super().__init__((window,Posattr(*pos)), image = Sprite(normal_scrollbar_back), cursor = Sprite(normal_scrollbar_cursor))
 		class Normal_SwitchButton(SwitchButton):
 			def __init__(self,text,pos = DEFAULT_POS):
 				title = Normal_ButtonLabel(text)
-				super(Normal_SwitchButton,self).__init__(
+				super().__init__(
 					(window,pos),
 					[title,title],
 					[Sprite(normal_switchbutton_back),Sprite(normal_switchbutton_select_back)],
@@ -193,7 +195,7 @@ class UI(pyglet.event.EventDispatcher):
 		class Normal_Tag_rv(SwitchButton):
 			def __init__(self, text,pos = DEFAULT_POS):
 				title = Normal_ButtonLabel(text)
-				super(Normal_Tag_rv,self).__init__(
+				super().__init__(
 					(window,pos),
 					[title,title],
 					[Sprite(normal_tag_rv_back),Sprite(normal_tag_rv_selected_back)],
@@ -202,14 +204,14 @@ class UI(pyglet.event.EventDispatcher):
 				)
 		class Normal_ScrollText(ScrollTextBox):
 			def __init__(self,text,pos = DEFAULT_POS):
-				super(Normal_ScrollText,self).__init__((window,Posattr(*pos)))
+				super().__init__((window,Posattr(*pos)))
 				doc = Normal_MessageText(text)
 				scrollbar = Normal_ScrollBar()
 				self.doc = doc
 				self.scrollbar = scrollbar
 		class Normal_ScrollFormattedText(ScrollTextBox):
 			def __init__(self,text,pos = DEFAULT_POS):
-				super(Normal_ScrollFormattedText,self).__init__((window,Posattr(*pos)))
+				super().__init__((window,Posattr(*pos)))
 				doc = Normal_FormattedText(text)
 				scrollbar = Normal_ScrollBar()
 				self.doc = doc
@@ -228,7 +230,7 @@ class UI(pyglet.event.EventDispatcher):
 				pass
 		class Alert(AlertBox,UIControl):
 			def __init__(self, text, title, pos = NORMAL_ALERT_POS):
-				super(Alert,self).__init__((window,Posattr(*pos)),back = Sprite(normal_menu_back),layouter = AlertBox_defaultlayout_gen())
+				super().__init__((window,Posattr(*pos)),back = Sprite(normal_menu_back),layouter = AlertBox_defaultlayout_gen())
 				alert_text = Normal_MessageText(text)
 				self.doc = alert_text
 				alert_title = Normal_Title(title)
@@ -240,7 +242,7 @@ class UI(pyglet.event.EventDispatcher):
 					self.end()
 		class Alert_Notitle(AlertBox,UIControl):
 			def __init__(self, text, pos = NORMAL_ALERT_NOTITLE_POS):
-				super(Alert_Notitle,self).__init__((window,Posattr(*pos)),back = Sprite(normal_menu_back),layouter = AlertBox_defaultlayout_gen(TITLE_HEIGHT = 0))
+				super().__init__((window,Posattr(*pos)),back = Sprite(normal_menu_back),layouter = AlertBox_defaultlayout_gen(TITLE_HEIGHT = 0))
 				alert_text = Normal_MessageText(text)
 				self.doc = alert_text
 				alert_button = Normal_Button(NORMAL_ALERT_BUTTON_TEXT)
@@ -250,7 +252,7 @@ class UI(pyglet.event.EventDispatcher):
 					self.end()
 		class MediaPage(MediaPlayer,UIControl):
 			def __init__(self, media, loop = False):
-				super(MediaPage,self).__init__([window])
+				super().__init__([window])
 				self.player = pyglet.media.player.Player()
 				self.queue(media)
 				self.loop = loop
@@ -264,10 +266,27 @@ class UI(pyglet.event.EventDispatcher):
 			def end(self):
 				self.clear()
 				UIControl.end(self)
+		class MessageWindow(AlertBox,UIControl):
+			def __init__(self, text, title, image = None, pos = None):
+				if pos is None:
+					pos = NORMAL_MESSAGE_POS
+				if image is None:
+					image = Sprite(normal_message_back)
+				super().__init__((window,Posattr(*pos)),back = image,layouter = AlertBox_defaultlayout_gen())
+				alert_text = Normal_MessageText(text)
+				self.doc = alert_text
+				alert_title = Normal_Title(title)
+				self.title = alert_title
+				alert_button = Normal_Button(NORMAL_MESSAGE_BUTTON_TEXT)
+				self.button = alert_button
+				@self.event
+				def on_submit():
+					self.end()
+				
 		# 设置菜单
 		class SettingMenu(MessageInteractor,UIControl):
 			def __init__(self):
-				super(SettingMenu,self).__init__((window,Posattr(*SETTING_MENU_POS)),back = Sprite(normal_menu_back))
+				super().__init__((window,Posattr(*SETTING_MENU_POS)),back = Sprite(normal_menu_back))
 				
 				title = Normal_Title(SETTING_MENU_TITLE, SETTING_MENU_TITLE_POS)
 				self.sons.append(title)
@@ -350,7 +369,7 @@ class UI(pyglet.event.EventDispatcher):
 		# 确认框
 		class ConfirmBox(MessageBox,UIControl):
 			def __init__(self, text, pos = CONFIRM_BOX_POS):
-				super(ConfirmBox,self).__init__((window,Posattr(*pos)),back = Sprite(normal_menu_back),layouter = MessageBox_defaultlayout_gen(TITLE_HEIGHT = 0))
+				super().__init__((window,Posattr(*pos)),back = Sprite(normal_menu_back),layouter = MessageBox_defaultlayout_gen(TITLE_HEIGHT = 0))
 				
 				text = Normal_MessageText(text)
 				self.doc = text
@@ -367,7 +386,7 @@ class UI(pyglet.event.EventDispatcher):
 		class VersionPage(AlertBox,UIControl):
 			def __init__(self):
 				text = data.version.checksum_to_str() + '\n\n' + data.version.name_to_str()
-				super(VersionPage,self).__init__((window,Posattr(*VERSION_PAGE_POS)),back = Sprite(normal_menu_back),layouter = AlertBox_defaultlayout_gen())
+				super().__init__((window,Posattr(*VERSION_PAGE_POS)),back = Sprite(normal_menu_back),layouter = AlertBox_defaultlayout_gen())
 				alert_text = Normal_ScrollText(text)
 				self.doc = alert_text
 				alert_title = Normal_Title(VERSION_PAGE_TITLE)
@@ -380,7 +399,7 @@ class UI(pyglet.event.EventDispatcher):
 		# 关于页面
 		class AboutPage(AlertBox,UIControl):
 			def __init__(self):
-				super(AboutPage,self).__init__((window,Posattr(*ABOUT_PAGE_POS)),
+				super().__init__((window,Posattr(*ABOUT_PAGE_POS)),
 				back = Sprite(normal_menu_back),layouter = AlertBox_defaultlayout_gen(TITLE_PADDING = 50, PADDING = 30, BUTTON_X = (0.5,-95),BUTTON_WIDTH = (0,190)))
 				
 				title = Normal_Title(ABOUT_PAGE_TITLE)
@@ -411,7 +430,7 @@ class UI(pyglet.event.EventDispatcher):
 					self.end()
 		
 		# 成就的UI数据
-		class AchievementItem_UIData(UIData):
+		class AchievementItem_UIData(UIData_DictItem):
 			def build_control(self):
 				icon = resource.load_image(self.icon)
 				self.icon_control = SpriteControl((window,Posattr(*ACHIEVEMENT_MESSAGE_ICON_POS)),Sprite(icon))
@@ -423,7 +442,7 @@ class UI(pyglet.event.EventDispatcher):
 			def build_dataset(cls):
 				return {item[0]:AchievementItem_UIData(item) for item in cls._data.items()}
 		# 成就页的UI数据
-		class AchievementPage_UIData(UIData):
+		class AchievementPage_UIData(UIData_DictItem):
 			def build_control(self):
 				return Normal_Tag_rv(self.name), ImageFrame((window,Posattr(*self.pos)),back = Sprite(resource.load_image(self.background)))
 		class AchievementPages_UIData(UIDataStaticSet):
@@ -470,7 +489,7 @@ class UI(pyglet.event.EventDispatcher):
 		# 成就信息
 		class AchievementMessage(MessageInteractor,UIControl):
 			def __init__(self, item, got):
-				super(AchievementMessage,self).__init__((window,Posattr(*ACHIEVEMENT_MESSAGE_POS)),back = Sprite(normal_menu_back))
+				super().__init__((window,Posattr(*ACHIEVEMENT_MESSAGE_POS)),back = Sprite(normal_menu_back))
 				icon = item.icon_control
 				title = Normal_Title(item.name,ACHIEVEMENT_MESSAGE_TITLE_POS)
 				label = Normal_Title2(ACHIEVEMENT_MESSAGE_GOTTEN_TITLE if got else ACHIEVEMENT_MESSAGE_UNGOTTEN_TITLE,ACHIEVEMENT_MESSAGE_STATELABEL_POS)
@@ -484,7 +503,7 @@ class UI(pyglet.event.EventDispatcher):
 		# 成就
 		class AchievementPage(MessageInteractor,UIControl):
 			def __init__(self):
-				super(AchievementPage,self).__init__([window],back = Sprite(normal_page_back))
+				super().__init__([window],back = Sprite(normal_page_back))
 				
 				achievement_tagpages = TagPages([window],layouter = TagPages_defaultlayoutV_gen(TAG_HEIGHT = ACHIEVEMENT_TAG_HEIGHT, TAG_PADDING = ACHIEVEMENT_TAG_PADDING, TAG_WIDTH = ACHIEVEMENT_TAG_WIDTH, FULL_PAGE = True))
 				self.sons.append(achievement_tagpages)
@@ -509,7 +528,7 @@ class UI(pyglet.event.EventDispatcher):
 			def refresh(self):
 				self.achievement_tagpages.pages = AchievementPage_Pages.get(self)
 				self.on_resize()
-		class AppendiceItem_UIData(UIData):
+		class AppendiceItem_UIData(UIData_DictItem):
 			def build_control(self):
 				r = Normal_SwitchButton(self.name)
 				icon = Sprite(resource.load_image(self.icon))
@@ -543,7 +562,7 @@ class UI(pyglet.event.EventDispatcher):
 		# 附录（图鉴）
 		class AppendicePage(MessageInteractor,UIControl):
 			def __init__(self):
-				super(AppendicePage,self).__init__([window],back = Sprite(normal_page_back))
+				super().__init__([window],back = Sprite(normal_page_back))
 				
 				title = Normal_Title0(APPENDICE_PAGE_TITLE, APPENDICE_PAGE_TITLE_POS)
 				self.sons.append(title)
@@ -608,7 +627,7 @@ class UI(pyglet.event.EventDispatcher):
 				self.select_list_buttons.button = 0
 				self.on_resize()
 		
-		class ScenarioItem_UIData(UIData):
+		class ScenarioItem_UIData(UIData_DictItem):
 			def build_control(self):
 				r = Normal_SwitchButton(self.name)
 				icon = Sprite(resource.load_image(self.icon))
@@ -644,7 +663,7 @@ class UI(pyglet.event.EventDispatcher):
 		class ScenarioPage(MessageInteractor, UIControl):
 			# _items_loaded = False
 			def __init__(self):
-				super(ScenarioPage, self).__init__([window],back = Sprite(normal_page_back))
+				super().__init__([window],back = Sprite(normal_page_back))
 				
 				title = Normal_Title0(SCENARIO_PAGE_TITLE, SCENARIO_PAGE_TITLE_POS)
 				self.sons.append(title)
@@ -728,7 +747,7 @@ class UI(pyglet.event.EventDispatcher):
 		# 主菜单
 		class MainMenu(ImageFrame,UIControl):
 			def __init__(self):
-				super(MainMenu,self).__init__([window],back = Sprite(main_menu_back))
+				super().__init__([window],back = Sprite(main_menu_back))
 				start_button = Button(
 					(window,Posattr(*MAIN_MENU_START_POS)),
 					label = pyglet.text.Label(MAIN_MENU_START_TEXT,font_name = MAIN_MENU_START_FONT,font_size = MAIN_MENU_START_FONT_SIZE,color = MAIN_MENU_START_COLOR,anchor_x = 'center',anchor_y = 'center'),
@@ -812,7 +831,7 @@ class UI(pyglet.event.EventDispatcher):
 		class SavesBox(ScrollFrame):
 			# 载入、显示及浏览存档
 			def __init__(self,  pos = DEFAULT_POS):
-				super(SavesBox, self).__init__((window, Posattr(*pos)))
+				super().__init__((window, Posattr(*pos)))
 				
 				select_list_buttons = SelectButtons([window],layouter = Grid_defaultlayout_gen(ITEM_HEIGHT = SAVESBOX_SELECT_ITEM_HEIGHT, ITEM_BLANKING = SAVESBOX_SELECT_ITEM_BLANKING, PADDING = 0))
 				self.frame = select_list_buttons
@@ -848,7 +867,7 @@ class UI(pyglet.event.EventDispatcher):
 		SavesBox.register_event_type('on_select_save')
 		class GamePageSave(MessageInteractor, UIControl):
 			def __init__(self, gamepage):
-				super(GamePageSave, self).__init__((window,Posattr(*SAVEPAGE_POS)), back = Sprite(normal_menu_back))
+				super().__init__((window,Posattr(*SAVEPAGE_POS)), back = Sprite(normal_menu_back))
 				self.gamepage = gamepage
 				
 				title = Normal_Title(SAVEPAGE_TITLE, SAVEPAGE_TITLE_POS)
@@ -930,12 +949,12 @@ class UI(pyglet.event.EventDispatcher):
 				saves.remove(self.save_name)
 				self.saves_box.refresh()
 			def save(self):
-				saves.save(self.save_name, self.gamepage.game.gamedata)
+				saves.save(self.save_name, self.gamepage.gameplay.gamedata)
 				self.saves_box.refresh()
 				self.end()
 		class GamePageLoad(MessageInteractor, UIControl):
 			def __init__(self):
-				super(GamePageLoad, self).__init__((window,Posattr(*LOADPAGE_POS)), back = Sprite(normal_menu_back))
+				super().__init__((window,Posattr(*LOADPAGE_POS)), back = Sprite(normal_menu_back))
 				
 				title = Normal_Title(LOADPAGE_TITLE, LOADPAGE_TITLE_POS)
 				self.sons.append(title)
@@ -1043,7 +1062,7 @@ class UI(pyglet.event.EventDispatcher):
 			save_data = property(lambda self:self._save_data,set_save_data)
 		class GamePageMenu(MessageInteractor, UIControl):
 			def __init__(self, gamepage):
-				super(GamePageMenu, self).__init__((window,Posattr(*GAME_MENU_POS)), back = Sprite(normal_menu_back))
+				super().__init__((window,Posattr(*GAME_MENU_POS)), back = Sprite(normal_menu_back))
 				
 				title = Normal_Title(GAME_MENU_TITLE, GAME_MENU_TITLE_POS)
 				self.title = title
@@ -1097,47 +1116,58 @@ class UI(pyglet.event.EventDispatcher):
 					
 		class GamePage(Frame,UIControl):
 			def __init__(self, gamedata, load_from_save = False):
-				super(GamePage,self).__init__([window])
-				game = GamePlay(ui.data, ui, gamedata, load_from_save)
-				self.game = game
+				super().__init__([window])
+				gameplay = game.GamePlay(gamedata, load_from_save)
+				self.gameplay = gameplay
 				gamepage = self
 				
 				class GamePageHeader(ImageFrame):
 					def __init__(self):
-						super(GamePageHeader, self).__init__((window,Posattr(*GAME_PAGE_HEADER_POS)), back = Sprite(game_page_header_back))
+						super().__init__((window,Posattr(*GAME_HEADER_POS)), back = Sprite(game_header_back))
 						gamepageheader = self
+						
+						class HeaderSwitchButton(SwitchButton):
+							def __init__(self, pos = DEFAULT_POS):
+								super().__init__((window,Posattr(*pos)), icons = [Sprite(game_header_switch_up_icon), Sprite(game_header_switch_down_icon)])
+						
+						messages_switch = HeaderSwitchButton(GAME_HEADER_MESSAGES_SWITCH_POS)
+						character_switch = HeaderSwitchButton(GAME_HEADER_CHARACTER_SWITCH_POS)
+						self.sons += (messages_switch, character_switch)
+						self.messages_switch = messages_switch
+						self.character_switch = character_switch
+						
 						class SpeedBar(Frame):
 							def __init__(self):
-								super(SpeedBar,self).__init__((window,Posattr(*GAME_PAGE_HEADER_SPEEDBAR_POS)))
+								super().__init__((window,Posattr(*GAME_HEADER_SPEEDBAR_POS)))
 								speedbar = self
 								
-								slider = ButtonSlider([window],layouter = ButtonSlider_defaultlayout_gen(PADDING_RATE = 0, HPADDING_RATE = 0, VPADDING_RATE = 0)) # ,back = Sprite(game_page_header_speedbar_back))
+								slider = ButtonSlider([window],layouter = ButtonSlider_defaultlayout_gen(PADDING_RATE = 0, HPADDING_RATE = 0, VPADDING_RATE = 0)) # ,back = Sprite(game_header_speedbar_back))
 								self.slider = slider
 								self.sons.append(slider)
 								class SliderButton(SwitchButton):
 									def __init__(self):
-										super(SliderButton,self).__init__([window],images = [Sprite(game_page_header_speedbar_button_back),Sprite(game_page_header_speedbar_pressed_back)])
+										super(SliderButton,self).__init__([window],images = [Sprite(game_header_speedbar_button_back),Sprite(game_header_speedbar_pressed_back)])
 								slider.buttons = [
 								SliderButton()
-								for i in range(GAME_PAGE_HEADER_SPEEDBAR_COUNT)]
+								for i in range(GAME_HEADER_SPEEDBAR_COUNT)]
 								slider.val = 0
 								@slider.event
 								def on_change(val):
 									gamepage.set_speed(val)
 								
-								label = Label((window,Middle_Posattr()),pyglet.text.Label('',font_name = GAME_PAGE_HEADER_SPEEDBAR_FONT,font_size = GAME_PAGE_HEADER_SPEEDBAR_FONT_SIZE,color = GAME_PAGE_HEADER_SPEEDBAR_FONT_COLOR, anchor_x = 'center',anchor_y = 'center'))
+								label = Label((window,Middle_Posattr()),pyglet.text.Label('',font_name = GAME_HEADER_SPEEDBAR_FONT,font_size = GAME_HEADER_SPEEDBAR_FONT_SIZE,color = GAME_HEADER_SPEEDBAR_FONT_COLOR, anchor_x = 'center',anchor_y = 'center'))
 								self.label = label
 								self.sons.append(label)
 							def refresh(self):
-								self.slider._set_val(game.speed)
-								self.label.text = (GAME_PAGE_HEADER_SPEEDBAR_PAUSE_TEXT if game.speed == 0 else '') + game.time.strftime(GAME_PAGE_HEADER_SPEEDBAR_TIME_FORMAT)
+								self.slider._set_val(gameplay.speed)
+								self.label.text = (GAME_HEADER_SPEEDBAR_PAUSE_TEXT if gameplay.speed == 0 else '') + gameplay.ui_data.time.strftime(GAME_HEADER_SPEEDBAR_TIME_FORMAT)
 						speedbar = SpeedBar()
 						self.speedbar = speedbar
 						self.sons.append(speedbar)
 						
 						class SwitchPageButtons(SelectButtons):
 							def __init__(self):
-								super(SwitchPageButtons,self).__init__((window,Posattr(*GAME_PAGE_HEADER_SWITCH_PAGE_POS)),layouter = Grid_ratelayout_gen(COLUMNS = 4, ROWS = 1, PADDING = 0, ITEM_BLANKING = 0))
+								super().__init__((window,Posattr(*GAME_HEADER_SWITCH_PAGE_POS)),layouter = Grid_ratelayout_gen(COLUMNS = 4, ROWS = 1, PADDING = 0, ITEM_BLANKING = 0))
 								switch_page_buttons = self
 								
 								class SwitchPageButton(SwitchButton):
@@ -1146,7 +1176,7 @@ class UI(pyglet.event.EventDispatcher):
 										selected_image = Sprite(game_header_switchpage_button_select_back)
 										if disabled_image is not None:
 											disabled_image = Sprite(disabled_image)
-										super(SwitchPageButton,self).__init__([window], icons = [icon,icon], images = [None,selected_image], disabled_images = None if disabled_image is None else [disabled_image,disabled_image], direction = 4)
+										super().__init__([window], icons = [icon,icon], images = [None,selected_image], disabled_images = None if disabled_image is None else [disabled_image,disabled_image], direction = 4)
 										
 								self.buttons = [SwitchPageButton(game_header_switchpage_icons[i], game_header_switchpage_disabled_icons[i]) for i in range(GAME_HEADER_STATUS_SWITCHPAGE_COUNT)]
 								@self.event
@@ -1164,42 +1194,48 @@ class UI(pyglet.event.EventDispatcher):
 								_label = None
 								if label_text is not None:
 									_label = Normal_ValueLabel(label_text)
-								super(StatusProgressBar,self).__init__((window,Posattr(*pos)),label = _label,back = _back,bar = _bar)
+								super().__init__((window,Posattr(*pos)),label = _label,back = _back,bar = _bar)
 								
 						class StatusIconBars(Grid):
 							def __init__(self, pos):
-								super(StatusIconBars,self).__init__((window, Posattr(*pos)),layouter = Grid_ratelayout_gen(COLUMNS = 4,ROWS = 1,PADDING = 0,ITEM_BLANKING = 10))
+								super().__init__((window, Posattr(*pos)),layouter = Grid_ratelayout_gen(COLUMNS = 4,ROWS = 1,PADDING = 0,ITEM_BLANKING = 0))
 								class StatusIconBar(StatusProgressBar):
 									def __init__(self, icon_image, color):
 										icon = Sprite(icon_image)
 										self.icon = icon
-										super(StatusIconBar,self).__init__(color)
+										super().__init__(color)
 									def on_resize(self):
-										super(StatusIconBar,self).on_resize()
+										super().on_resize()
 										self.resize_image_direction(self.icon, 4)
 									def draw(self, range = None):
 										# print('drawn a button')
-										super(StatusIconBar, self).draw(range)
+										super().draw(range)
 										if self.icon is not None:
 											self.icon.draw()
 					
 								self.sons = [StatusIconBar(game_header_status_bar_icons[i], GAME_HEADER_STATUS_BAR_COLORS[i]) for i in range(GAME_HEADER_STATUS_BAR_COUNT)]
 								self.relayout()
 								
-						status_bars = StatusIconBars(GAME_PAGE_HEADER_STATUS_BARS_POS)
+						status_bars = StatusIconBars(GAME_HEADER_STATUS_BARS_POS)
 						self.status_bars = status_bars
 						self.sons.append(status_bars)
 							
-						rating_bar = StatusProgressBar(GAME_PAGE_HEADER_RATING_BAR_DEFAULT_COLOR, GAME_PAGE_HEADER_RATING_BAR_POS, '')
+						rating_bar = StatusProgressBar(GAME_HEADER_RATING_BAR_DEFAULT_COLOR, GAME_HEADER_RATING_BAR_POS, '')
 						self.rating_bar = rating_bar
 						self.sons.append(rating_bar)
 						
-						menu_button = Normal_Button(GAME_PAGE_HEADER_MENU_BUTTON_TEXT,GAME_PAGE_HEADER_MENU_BUTTON_POS)
+						menu_button = Normal_Button(GAME_HEADER_MENU_BUTTON_TEXT,GAME_HEADER_MENU_BUTTON_POS)
 						self.sons.append(menu_button)
 						
+						@messages_switch.event
+						def on_press():
+							messages_switch.stage ^= 1
+						@character_switch.event
+						def on_press():
+							character_switch.stage ^= 1
 						@menu_button.event
 						def on_press():
-							game.pause()
+							gameplay.pause()
 							GamePageMenu(gamepage).exe()
 				
 				header = GamePageHeader()
@@ -1208,27 +1244,36 @@ class UI(pyglet.event.EventDispatcher):
 				
 				class GamePages(MultiPage):
 					def __init__(self):
-						super(GamePages, self).__init__((window, Posattr(*GAME_PAGES_POS)))
+						super().__init__((window, Posattr(*GAME_PAGES_POS)))
 						
 						class GamePages_Page(ImageFrame):
-							def __init__(self, back_img):
-								super(GamePages_Page,self).__init__([window],back = Sprite(back_img))
+							def __init__(self, back_image):
+								super().__init__([window],back = Sprite(back_image))
 								
 						class GamePages_Character(ImageFrame):
 							def __init__(self):
-								super(GamePages_Character, self).__init__([window], back = Sprite(game_pages_character_back))
-						
+								super().__init__([window], back = Sprite(game_pages_character_back))
+								back_image = SpriteControl((window,Posattr(*GAME_PAGES_CHARACTER_BACK_POS)))
+								self.back_image = back_image
+								front_image = SpriteControl((window,Posattr(*GAME_PAGES_CHARACTER_FRONT_POS)))
+								self.front_image = front_image
+								
+								self.sons += (back_image, front_image)
+							def refresh(self):
+								self.back_image.image, self.front_image.image = gameplay.ui_data.pages_character_ui
+								self.on_resize()
+								
 						class GamePages_Timetable(ImageFrame):
 							def __init__(self):
-								super(GamePages_Timetable, self).__init__([window], back = Sprite(game_pages_timetable_back))
+								super().__init__([window], back = Sprite(game_pages_timetable_back))
 								
 						class GamePages_Ability(ImageFrame):
 							def __init__(self):
-								super(GamePages_Ability, self).__init__([window], back = Sprite(game_pages_ability_back))
+								super().__init__([window], back = Sprite(game_pages_ability_back))
 								
 						class GamePages_Contest(ImageFrame):
 							def __init__(self):
-								super(GamePages_Contest, self).__init__([window], back = Sprite(game_pages_contest_back))
+								super().__init__([window], back = Sprite(game_pages_contest_back))
 								
 						character_page = GamePages_Character()
 						self.character_page = character_page
@@ -1248,21 +1293,158 @@ class UI(pyglet.event.EventDispatcher):
 				self.pages = pages
 				self.sons.append(pages)
 				
-				@game.event
+				class GameMessagesBoard(ImageFrame):
+					def __init__(self):
+						super().__init__((window,Posattr(*GAME_MESSAGES_BOARD_POS)), back = Sprite(game_board_back))
+						
+						timetable_label = Normal_Label(GAME_MESSAGES_BOARD_TIMETABLE_TEXT,GAME_MESSAGES_BOARD_TIMETABLE_LABEL_POS,anchor_x = 'center')
+						self.timetable_label = timetable_label
+						self.sons.append(timetable_label)
+						
+						timetable = Grid((window,Posattr(*GAME_MESSAGES_BOARD_TIMETABLE_POS)),layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_MESSAGES_BOARD_TIMETABLE_ITEM_HEIGHT,CAL_ABSH = False))
+						self.timetable = timetable
+						self.sons.append(timetable)
+						
+						log_label = Normal_Label(GAME_MESSAGES_BOARD_LOG_TEXT,GAME_MESSAGES_BOARD_LOG_LABEL_POS,anchor_x = 'center')
+						self.log_label = log_label
+						self.sons.append(log_label)
+						
+						log = Grid((window,Posattr(*GAME_MESSAGES_BOARD_LOG_POS)),layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_MESSAGES_BOARD_LOG_ITEM_HEIGHT,CAL_ABSH = False))
+						self.log = log
+						self.sons.append(log)
+						
+						plan_label = Normal_Label(GAME_MESSAGES_BOARD_PLAN_TEXT,GAME_MESSAGES_BOARD_PLAN_LABEL_POS,anchor_x = 'center')
+						self.plan_label = plan_label
+						self.sons.append(plan_label)
+						
+						plan = Grid((window,Posattr(*GAME_MESSAGES_BOARD_PLAN_POS)),layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_MESSAGES_BOARD_PLAN_ITEM_HEIGHT,CAL_ABSH = False))
+						self.plan = plan
+						self.sons.append(plan)
+						
+						strategy_label = Normal_Label(GAME_MESSAGES_BOARD_STRATEGY_TEXT,GAME_MESSAGES_BOARD_STRATEGY_LABEL_POS,anchor_x = 'center')
+						self.strategy_label = strategy_label
+						self.sons.append(strategy_label)
+						
+						strategy_buttons = SelectButtons([window],layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_MESSAGES_BOARD_STRATEGY_ITEM_HEIGHT))
+						# 越级访问
+						self.strategy_buttons = strategy_buttons
+						
+						strategy_scroll = Normal_ScrollBar()
+						self.strategy_scroll = strategy_scroll
+						
+						strategy_frame = ScrollFrame((window,Posattr(*GAME_MESSAGES_BOARD_STRATEGY_POS)))
+						self.strategy_frame = strategy_frame
+						self.sons.append(strategy_frame)
+						strategy_frame.frame = strategy_buttons
+						strategy_frame.scrollbar = strategy_scroll
+						
+						@strategy_buttons.event
+						def on_switch(button):
+							if button == -1:
+								gameplay.current_strategy = None
+							else:
+								gameplay.current_strategy = strategy_buttons.buttons[button].key
+					def refresh(self):
+						self.timetable.sons, self.log.sons, self.plan.sons, strategy_items = gameplay.ui_data.messages_board_ui
+						self.strategy_buttons._set_buttons(strategy_items)
+						self.strategy_buttons._set_button(-1)
+						for i in range(len(strategy_items)):
+							if gameplay.current_strategy == strategy_items[i].key:
+								self.strategy_buttons._set_button(i)
+								break
+						for i in self.plan.sons:
+							@i.event
+							def on_press():
+								self.strategy_buttons.button = -1
+						self.timetable.relayout()
+						self.log.relayout()
+						self.plan.relayout()
+						self.strategy_buttons.relayout()
+						self.on_resize()
+						if self.visible:
+							self.show()
+						
+				class GameCharacterBoard(ImageFrame):
+					def __init__(self):
+						super().__init__((window,Posattr(*GAME_CHARACTER_BOARD_POS)), back = Sprite(game_board_back))
+						image = SpriteControl((window,Posattr(*GAME_CHARACTER_BOARD_IMAGE_POS)))
+						self.image = image
+						self.sons.append(image)
+						
+						title = Normal_Title('',GAME_CHARACTER_BOARD_TITLE_POS)
+						self.title = title
+						self.sons.append(title)
+						
+						info = Grid((window,Posattr(*GAME_CHARACTER_BOARD_INFO_POS)),layouter = Grid_defaultlayout_gen(COLUMNS = 1,PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = None))
+						info.sons = [Normal_Label('', anchor_x = 'center') for i in range(GAME_CHARACTER_BOARD_INFO_COUNT)]
+						self.info = info
+						self.sons.append(info)
+					def refresh(self):
+						self.image.image ,self.title.text ,infotexts = gameplay.ui_data.character_board_ui
+						for i in range(GAME_CHARACTER_BOARD_INFO_COUNT):
+							self.info.sons[i].text = infotexts[i]
+						self.info.relayout()
+						self.on_resize()
+						if self.visible:
+							self.show()
+				
+				messages_board = GameMessagesBoard()
+				character_board = GameCharacterBoard()
+				self.messages_board = messages_board
+				self.character_board = character_board
+				self.sons += (messages_board, character_board)
+				
+				@header.messages_switch.event
+				def on_switch(stage):
+					if stage:
+						messages_board.show()
+					else:
+						messages_board.hide()
+				@header.character_switch.event
+				def on_switch(stage):
+					if stage:
+						character_board.show()
+					else:
+						character_board.hide()
+						
+				header.messages_switch.stage = 1
+				header.character_switch.stage = 1
+				
+				@gameplay.event
 				def on_update_speed_time():
 					self.refresh_speed_time()
+				@gameplay.event
+				def on_update_message():
+					self.refresh_message_board()
+				@gameplay.event
+				def on_update_pages_character():
+					self.refresh_pages_character()
+				@gameplay.event
+				def on_update():
+					self.refresh()
 			def set_speed(self, v):
-				self.game.speed = v
+				self.gameplay.speed = v
 			def refresh_speed_time(self):
 				self.header.speedbar.refresh()
+			def refresh_character_board(self):
+				self.character_board.refresh()
+			def refresh_message_board(self):
+				self.messages_board.refresh()
+			def refresh_pages_character(self):
+				self.pages.character_page.refresh()
 			def refresh(self):
 				self.refresh_speed_time()
+				self.refresh_character_board()
+				self.refresh_message_board()
+				self.refresh_pages_character()
 				# 刷新UI
 			def exe(self):
 				# 使用类名调用父类函数 -- 注意
 				UIControl.exe(self)
-				self.game._play()
-				
+				self.gameplay._play()
+			def end(self):
+				UIControl.end(self)
+				self.gameplay._end()
 		def play_game_from_scenario(scenario):
 			gamedata = data.get(['GAME_DEFINE',scenario.game_define])
 			gamedata['scenario'] = scenario.key
@@ -1293,3 +1475,4 @@ class UI(pyglet.event.EventDispatcher):
 		
 		self.__dict__.update({key:value for key,value in locals().items() if key != 'self'})
 		
+ui = UI()

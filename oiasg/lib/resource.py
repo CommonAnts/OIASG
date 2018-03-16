@@ -5,9 +5,10 @@ import os
 
 import pyglet
 
+from .data import *
+
 class Resource(object):
-	def __init__(self,data):
-		self.data = data
+	def init(self):
 		pyglet.resource.path = data.get_subdirs('resources')
 		self.load_fonts(data.get_all_list(['FONTS']))
 	def load_fonts(self,fonts):
@@ -38,4 +39,6 @@ class Resource(object):
 			# pyglet标准格式
 			return pyglet.text.decode_attributed(str[1:])
 	def default_formatted_text(self,str):
-		return self.decode_text('F'+self.data.get(['UI','NORMAL_MESSAGE_TEXT_STYLE_TEXT'],'')+str)
+		return self.decode_text('F'+data.get(['UI','NORMAL_MESSAGE_TEXT_STYLE_TEXT'],'')+str)
+
+resource = Resource()

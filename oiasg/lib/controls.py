@@ -171,14 +171,17 @@ class Label(Control):
 
 # 精灵控件
 class SpriteControl(Control):
-	def __init__(self, control, image = None):
+	def __init__(self, control, image = None, fixed_ratio = True):
 		super(SpriteControl, self).__init__(*control)
 		self.image = image
+		self.fixed_ratio = fixed_ratio
 		self.on_resize()
 	def on_resize(self):
-		if self.image is not None:
-			self.image.update(x = self.x, y = self.y, scale_x = self.width / self.image.t_width , scale_y = self.height / self.image.t_height)
 		super(SpriteControl, self).on_resize()
+		if self.fixed_ratio:
+			self.resize_image_direction(self.image, 4)
+		else:
+			self.resize_image_full(self.image)
 	def draw(self, range = None):
 		super(SpriteControl, self).draw(range)
 		self._draw(self.image)
@@ -657,20 +660,31 @@ class LayoutFrame(Frame):
 		self.relayout()
 	layouter = property(lambda self:self._layouter,set_layouter)
 
-def Grid_defaultlayout_gen(COLUMNS = 1, PADDING = 20, ITEM_BLANKING = 10, ITEM_HEIGHT = 30, ITEM_WIDTH = None):
+def Grid_defaultlayout_gen(COLUMNS = 1, PADDING = 20, ITEM_BLANKING = 10, ITEM_HEIGHT = 30, ITEM_WIDTH = None, CAL_ABSH = True):
 	def Grid_defaultlayout(self):
+		if not self.sons:
+			return
+		ROWS = (len(self.sons)+COLUMNS-1)//COLUMNS
 		if ITEM_WIDTH is None:
 			item_wk = 1/COLUMNS
 			item_wb = -(ITEM_BLANKING*(COLUMNS-1)+PADDING*2)/COLUMNS
 		else:
 			item_wk = 0
 			item_wb = ITEM_WIDTH
-		cur_xk, cur_xb, cur_yk, cur_yb = 0, PADDING, 1, -ITEM_HEIGHT-PADDING
+		if ITEM_HEIGHT is None:
+			item_hk = 1 / ROWS
+			item_hb = -(ITEM_BLANKING*(ROWS-1)+PADDING*2) / ROWS
+		else:
+			item_hk = 0
+			item_hb = ITEM_HEIGHT
+		cur_xk, cur_xb = 0, PADDING
+		cur_yk, cur_yb = 1 - item_hk, - item_hb - PADDING
 		for i in range(len(self.sons)):
-			self.sons[i].pos = Posattr((cur_xk,cur_xb),(cur_yk,cur_yb),(item_wk,item_wb),(0,ITEM_HEIGHT))
+			self.sons[i].pos = Posattr((cur_xk,cur_xb),(cur_yk,cur_yb),(item_wk,item_wb),(item_hk,item_hb))
 			if (i+1)%COLUMNS == 0:
 				cur_xk , cur_xb = 0, PADDING
-				cur_yb -= ITEM_BLANKING + ITEM_HEIGHT
+				cur_yk -= item_hk
+				cur_yb -= ITEM_BLANKING + item_hb
 			else:
 				cur_xk += item_wk
 				cur_xb += item_wb + ITEM_BLANKING
@@ -679,14 +693,18 @@ def Grid_defaultlayout_gen(COLUMNS = 1, PADDING = 20, ITEM_BLANKING = 10, ITEM_H
 		else:
 			columns = min(len(self.sons),COLUMNS)
 			self.abswidth = columns*ITEM_WIDTH + (columns-1)*ITEM_BLANKING + 2*PADDING
-		rows = (len(self.sons)+COLUMNS-1)//COLUMNS
-		self.absheight = rows*ITEM_HEIGHT + (rows-1)*ITEM_BLANKING + 2*PADDING
+		if ITEM_HEIGHT is None or not CAL_ABSH:
+			self.absheight = None
+		else:
+			self.absheight = ROWS*ITEM_HEIGHT + (ROWS-1)*ITEM_BLANKING + 2*PADDING
 	return Grid_defaultlayout
 
 Grid_defaultlayout = Grid_defaultlayout_gen()
 
 def Grid_ratelayout_gen(COLUMNS = 1, ROWS = 1, PADDING = 20, ITEM_BLANKING = 10):
 	def Grid_ratelayout(self):
+		if not self.sons:
+			return
 		item_wk = 1 / COLUMNS
 		item_wb = -(ITEM_BLANKING*(COLUMNS-1)+PADDING*2) / COLUMNS
 		item_hk = 1 / ROWS
@@ -734,20 +752,24 @@ class SelectButtons(Grid):
 		self.set_buttons_event()
 		self.relayout()
 		self.button = 0
-	def set_buttons(self, buttons):
+	def _set_buttons(self, buttons):
 		self._buttons = buttons
 		self.sons = buttons
 		self.set_buttons_event()
 		self.relayout()
+	def set_buttons(self, buttons):
+		self._set_buttons(buttons)
 		self.button = 0
 	buttons = property(lambda self:self._buttons,set_buttons)
-	def set_button(self, button):
+	def _set_button(self, button):
 		self._button = button
 		for i in range(len(self.buttons)):
 			if i == button:
 				self.buttons[i].stage = 1
 			else:
 				self.buttons[i].stage = 0
+	def set_button(self, button):
+		self._set_button(button)
 		self.dispatch_event('on_switch',self.button)
 	button = property(lambda self:self._button,set_button)
 	def on_switch(self, button):

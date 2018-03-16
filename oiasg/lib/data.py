@@ -144,6 +144,7 @@ class GameVersion(object):
 	def checksum_to_str(self):
 		return self.checksum[:16]
 # 数据管理器
+# 单类
 class Data(object):
 	def __init__(self, game_path):
 		self._checksum = None
@@ -156,12 +157,6 @@ class Data(object):
 		return self.define.checksum()
 	def _package_name(self):
 		return self.define.get(['PACKAGE_NAME'],'')
-	@property
-	def version(self):
-		if self._version is not None:
-			return self._version
-		self._version = GameVersion(self)
-		return self._version
 	def save(self):
 		self.data.save()
 		for i in self.dlcs:
@@ -229,7 +224,34 @@ class Data(object):
 		for i in self.dlcs:
 			res += i.get_subdirs(path)
 		return res
-
+	@property
+	def version(self):
+		if self._version is not None:
+			return self._version
+		self._version = GameVersion(self)
+		return self._version
+		
+class DataSystem(object):
+	def init(self, game_path):
+		self.data = Data(game_path)
+	@property
+	def version(self):
+		return self.data.version
+	def save(self):
+		self.data.save()
+	def get(self, key_seq, default = None):
+		return self.data.get(key_seq, default)
+	def get_all(self, key_seq):
+		return self.data.get_all(self, key_seq)
+	def get_all_list(self, key_seq):
+		return self.data.get_all_list(key_seq)
+	def get_all_dict(self, key_seq):
+		return self.data.get_all_dict(key_seq)
+	def set(self, key_seq, value):
+		return self.data.set(key_seq, value)
+	def get_subdirs(self, path):
+		return self.data.get_subdirs(path)
+		
 class SaveFileIO(object):
 	@staticmethod
 	def set_file(file, data):
@@ -249,8 +271,9 @@ class SaveFileIO(object):
 
 _SAVE_EXT = '.oiasgsav'
 # 存档管理器
+# 单类
 class GameSaveManager(object):
-	def __init__(self, game_path):
+	def init(self, game_path):
 		self.PATH = game_path
 		self.savepath = os.path.join(game_path, 'saves')
 		if not os.path.isdir(self.savepath):
@@ -285,3 +308,5 @@ class GameSaveManager(object):
 		return SaveFileIO.get_file(self.get_save_abspath(name))
 	def remove(self, name):
 		SaveFileIO.remove_file(self.get_save_abspath(name))
+saves = GameSaveManager()
+data = DataSystem()
