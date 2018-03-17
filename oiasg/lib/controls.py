@@ -87,8 +87,8 @@ class Control(pyglet.event.EventDispatcher):
 				image.update(x = self.x, y = self.y, scale = k)
 			elif direction == 4:
 				k = min(self.width / image.t_width, self.height / image.t_height)
-				X = self.x + max(0, (self.width - self.height) / 2)
-				Y = self.y + max(0, (self.height - self.width) / 2)
+				X = self.x + (self.width - k*image.t_width) / 2
+				Y = self.y + (self.height - k*image.t_height) / 2
 				image.update(x = X, y = Y, scale = k)
 	def on_resize(self):
 		pass
@@ -726,16 +726,32 @@ class Grid(LayoutFrame):
 		super(Grid, self).__init__(control)
 		self.layouter = layouter
 	
+class LRButtons(Grid):
+	def __init__(self, control, buttons = None):
+		super(LRButtons, self).__init__(control, layouter = Grid_ratelayout_gen(ROWS = 1,COLUMNS = 2, PADDING = 0, ITEM_BLANKING = 0))
+		self.sons = buttons if buttons is not None else []
+		self.relayout()
+	
+class UDButtons(Grid):
+	def __init__(self, control, buttons = None):
+		super(UDButtons, self).__init__(control, layouter = Grid_ratelayout_gen(ROWS = 2,COLUMNS = 1, PADDING = 0, ITEM_BLANKING = 0))
+		self.sons = buttons if buttons is not None else []
+		self.relayout()
+	
 class SelectButtons(Grid):
-	def __init__(self, control, buttons = None, layouter = Grid_defaultlayout):
-		super(SelectButtons, self).__init__(control,layouter)
+	def __init__(self, control, buttons = None, layouter = Grid_defaultlayout, canceling = False):
+		super(SelectButtons, self).__init__(control, layouter)
 		self.layouter = layouter
+		self.canceling = canceling
 		self.buttons = buttons if buttons is not None else []
 	def set_buttons_event(self):
 		for i in range(len(self.buttons)):
 			def g(i):
 				def f():
-					self.button = i
+					if self.canceling and self.button == i:
+						self.button = -1
+					else:
+						self.button = i
 				return f
 			self.buttons[i].on_press = g(i)
 	def insert(self, button):

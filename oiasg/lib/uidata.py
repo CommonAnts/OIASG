@@ -7,6 +7,7 @@ from .data import *
 from .resource import *
 from .gameobjects import *
 from . import ui
+from . import uiresource
 
 class UIData_Base(object):
 	def build_control(self):
@@ -55,7 +56,7 @@ class Message_Log_UIData(UIData):
 		button_text = self.data.time.strftime(self.data.timeformat) + ' ' + self.data.name
 		button_label = pyglet.text.Label(button_text,font_name = self.data.font_name if self.data.font_name is not None else ui.GAME_MESSAGE_FONT_NAME,font_size = ui.GAME_MESSAGE_FONT_SIZE,color = self.data.font_color,anchor_x = 'center',anchor_y = 'center')
 		button = Button([ui.ui.window], label = button_label,
-			image = Sprite(ui.ui.game_message_log_back),
+			image = Sprite(uiresource.game_message_log_back),
 			hover_color = ui.NORMAL_BUTTON_HOVER_COLOR,
 			color = ui.NORMAL_BUTTON_COLOR)
 		messagewindow = ui.ui.MessageWindow(self.data.text, self.data.name, Sprite(resource.load_image(self.data.image)) if self.data.image is not None else None, self.data.pos)
@@ -68,7 +69,7 @@ class Message_Timetable_UIData(UIData):
 		button_text = self.data.time.strftime(self.data.timeformat) + ' ' + self.data.name
 		button_label = pyglet.text.Label(button_text,font_name = self.data.font_name if self.data.font_name is not None else ui.GAME_MESSAGE_FONT_NAME,font_size = ui.GAME_MESSAGE_FONT_SIZE,color = self.data.font_color,anchor_x = 'center',anchor_y = 'center')
 		button = Button([ui.ui.window], label = button_label,
-			image = Sprite(ui.ui.game_message_timetable_back),
+			image = Sprite(uiresource.game_message_timetable_back),
 			hover_color = ui.NORMAL_BUTTON_HOVER_COLOR,
 			color = ui.NORMAL_BUTTON_COLOR)
 		messagewindow = ui.ui.MessageWindow(self.data.text, self.data.name, Sprite(resource.load_image(self.data.image)) if self.data.image is not None else None, self.data.pos)
@@ -83,7 +84,7 @@ class Strategy_UIData(UIData):
 		button = SwitchButton(
 			[ui.ui.window],
 			[button_label,button_label],
-			[Sprite(ui.ui.game_message_strategy_back),Sprite(ui.ui.game_message_strategy_select_back)],
+			[Sprite(uiresource.game_message_strategy_back),Sprite(uiresource.game_message_strategy_select_back)],
 			[icon,icon],
 			hover_color = ui.NORMAL_BUTTON_HOVER_COLOR,
 			color = ui.NORMAL_BUTTON_COLOR
@@ -143,7 +144,7 @@ class GameUIDataManager(object):
 		
 	@property
 	def messages_board_ui(self):
-		plans = self.game.gamedata['strategy_plans']
+		plans = self.game.gamedata['strategy_plan']
 		
 		strategy_board_items = []
 		if plans:
@@ -162,7 +163,12 @@ class GameUIDataManager(object):
 		if self.game.gamedata['pages_character_front'] is not None:
 			front = self.get_image(self.game.gamedata['pages_character_front'])
 		return back, front
-		
+	
+	@property
+	def select_strategy_plans(self):
+		# 坑
+		return []
+	
 	@property
 	def time(self):
 		return self.game.gamedata['time']

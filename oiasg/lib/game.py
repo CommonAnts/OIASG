@@ -4,7 +4,7 @@
 import datetime
 import pyglet
 
-from .resource import *
+from .resource import resource
 from .gameobjects import *
 from .uidata import *
 from . import ui
@@ -43,6 +43,7 @@ class GamePlay(pyglet.event.EventDispatcher):
 		self.SolGraph = SolGraph
 		self.Problem = Problem
 		self.Contest = Contest
+		self.StrategyPlan = StrategyPlan
 	def _init_system_data(self):
 		self.speed = 0
 	def _init_game_data(self):

@@ -31,12 +31,13 @@
 		'abilitypages':{},
 		'messages':{},
 		'contests':{},
+		'strategy_plans':{},
 		
 		# 子集
 		'timetable_messages':[],
 		'log_messages':[],
 		
-		'strategy_plans':[],
+		'strategy_plan':[],
 		'strategy_plan_it':0,
 		'current_strategy':None,
 		

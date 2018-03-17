@@ -4,9 +4,9 @@
 import os
 import pyglet
 from lib import *
-from lib.data import *
-from lib.resource import *
-from lib.ui import *
+from lib.data import data, saves
+from lib.resource import resource
+from lib.ui import ui
 GAMEPATH = os.path.dirname(os.path.realpath(__file__))
 class GameObject(object):
 	# 游戏体（单类）

@@ -5,8 +5,9 @@ import datetime
 import pyglet
 
 from .controls import *
-from .data import *
+from .data import data, saves
 from .uidata import *
+from . import uiresource
 from . import game
 
 class UI(pyglet.event.EventDispatcher):
@@ -42,7 +43,8 @@ class UI(pyglet.event.EventDispatcher):
 	def show(self):
 		self.window.show()
 	def init(self):
-		globals().update(data.get_all_dict(['UI'])) # 引入命名空间
+		uiresource.init()
+		globals().update(uiresource.vars)
 		
 		window = Form(960,540,caption = CAPTION,resizable = True)
 		self.window = window
@@ -69,57 +71,6 @@ class UI(pyglet.event.EventDispatcher):
 		# 初始化设置
 		
 		self.init_settings()
-	
-		# 预加载资源
-		
-		normal_button_back = resource.load_image(NORMAL_BUTTON_BACK)
-		normal_button_pressed_back = resource.load_image(NORMAL_BUTTON_PRESSED_BACK)
-		normal_menu_back = resource.load_image(NORMAL_MENU_BACK)
-		normal_page_back = resource.load_image(NORMAL_PAGE_BACK)
-		normal_default_image = resource.load_image(NORMAL_DEFAULT_IMAGE)
-		normal_slider_back = resource.load_image(NORMAL_SLIDER_BACK)
-		normal_slider_cursor = resource.load_image(NORMAL_SLIDER_CURSOR)
-		normal_checkbox_unchecked_back = resource.load_image(NORMAL_CHECKBOX_UNCHECKED_BACK)
-		normal_checkbox_checked_back = resource.load_image(NORMAL_CHECKBOX_CHECKED_BACK)
-		normal_scrollbar_back = resource.load_image(NORMAL_SCROLLBAR_BACK)
-		normal_scrollbar_cursor = resource.load_image(NORMAL_SCROLLBAR_CURSOR)
-		normal_switchbutton_back = resource.load_image(NORMAL_SWITCHBUTTON_BACK)
-		normal_switchbutton_select_back = resource.load_image(NORMAL_SWITCHBUTTON_SELECT_BACK)
-		normal_tag_rv_back = resource.load_image(NORMAL_TAG_RV_IMAGE)
-		normal_tag_rv_selected_back = resource.load_image(NORMAL_TAG_RV_SELECTED_IMAGE)
-		normal_progress_bar_front = resource.load_image(NORMAL_PROGRESS_BAR_FRONT)
-		normal_progress_bar_back = resource.load_image(NORMAL_PROGRESS_BAR_BACK)
-		normal_message_back = resource.load_image(NORMAL_MESSAGE_BACK)
-		
-		main_menu_back = resource.load_image(MAIN_MENU_BACK)
-		main_menu_start_back = resource.load_image(MAIN_MENU_START_BACK)
-		main_menu_start_pressed_back = resource.load_image(MAIN_MENU_START_PRESSED_BACK)
-		
-		game_header_back = resource.load_image(GAME_HEADER_BACK)
-		# game_header_speedbar_back = resource.load_image(GAME_HEADER_SPEEDBAR_BACK)
-		game_header_speedbar_button_back = resource.load_image(GAME_HEADER_SPEEDBAR_BUTTON_BACK)
-		game_header_speedbar_pressed_back = resource.load_image(GAME_HEADER_SPEEDBAR_BUTTON_PRESSED_BACK)
-		
-		game_pages_character_back = resource.load_image(GAME_PAGES_CHARACTER_BACK)
-		game_pages_timetable_back = resource.load_image(GAME_PAGES_TIMETABLE_BACK)
-		game_pages_ability_back = resource.load_image(GAME_PAGES_ABILITY_BACK)
-		game_pages_contest_back = resource.load_image(GAME_PAGES_CONTEST_BACK)
-		
-		game_header_status_bar_icons = [resource.load_image(i) for i in GAME_HEADER_STATUS_BAR_ICONS]
-		
-		game_header_switchpage_icons = [resource.load_image(i) for i in GAME_HEADER_SWITCHPAGE_ICONS]
-		game_header_switchpage_disabled_icons = [(resource.load_image(i) if i is not None else None) for i in GAME_HEADER_SWITCHPAGE_DISABLED_ICONS]
-		game_header_switchpage_button_select_back = resource.load_image(GAME_HEADER_SWITCHPAGE_BUTTON_SELECT_BACK)
-		
-		game_header_switch_down_icon = resource.load_image(GAME_HEADER_SWITCH_DOWN_ICON)
-		game_header_switch_up_icon = resource.load_image(GAME_HEADER_SWITCH_UP_ICON)
-		
-		game_board_back = resource.load_image(GAME_BOARD_BACK)
-		
-		game_message_timetable_back = resource.load_image(GAME_MESSAGE_TIMETABLE_BACK)
-		game_message_log_back = resource.load_image(GAME_MESSAGE_LOG_BACK)
-		game_message_strategy_back = resource.load_image(GAME_MESSAGE_STRATEGY_BACK)
-		game_message_strategy_select_back = resource.load_image(GAME_MESSAGE_STRATEGY_SELECT_BACK)
 		
 		class Middle_Posattr(Posattr):
 			def __init__(self):
@@ -222,6 +173,7 @@ class UI(pyglet.event.EventDispatcher):
 		class UIControl(object):
 			def exe(self):
 				# 执行该控件
+				self.refresh()
 				push_control(self)
 			def end(self):
 				remove_control(self)
@@ -1128,7 +1080,7 @@ class UI(pyglet.event.EventDispatcher):
 						
 						class HeaderSwitchButton(SwitchButton):
 							def __init__(self, pos = DEFAULT_POS):
-								super().__init__((window,Posattr(*pos)), icons = [Sprite(game_header_switch_up_icon), Sprite(game_header_switch_down_icon)])
+								super().__init__((window,Posattr(*pos)), icons = [Sprite(game_header_switch_up_icon), Sprite(game_header_switch_down_icon)],disabled_images = [Sprite(game_header_switch_disabled_image)])
 						
 						messages_switch = HeaderSwitchButton(GAME_HEADER_MESSAGES_SWITCH_POS)
 						character_switch = HeaderSwitchButton(GAME_HEADER_CHARACTER_SWITCH_POS)
@@ -1242,6 +1194,71 @@ class UI(pyglet.event.EventDispatcher):
 				self.header = header
 				self.sons.append(header)
 				
+				class GamePage_StrategyPlanBox(ScrollFrame):
+					# 载入、显示及浏览存档
+					def __init__(self,  pos = DEFAULT_POS):
+						super().__init__((window, Posattr(*pos)))
+						
+						select_list_buttons = SelectButtons([window],layouter = Grid_defaultlayout_gen(ITEM_HEIGHT = GAME_SLPLAN_SELECT_ITEM_HEIGHT, ITEM_BLANKING = GAME_SLPLAN_SELECT_ITEM_BLANKING, PADDING = 0), canceling = True)
+						self.frame = select_list_buttons
+						
+						scrollbar = Normal_ScrollBar()
+						self.scrollbar = scrollbar
+						
+						@select_list_buttons.event
+						def on_switch(button):
+							if button < 0 or button >= len(select_list_buttons.buttons):
+								self.dispatch_event('on_select_plan', None)
+							else:
+								self.dispatch_event('on_select_plan', select_list_buttons.buttons[button].key)
+					def refresh(self):
+						self.frame.buttons = gameplay.ui_data.select_strategy_plans
+						if self.visible:
+							self.show()
+						self.scrollbar.rate = 0
+						self.frame.button = -1
+						self.on_resize()
+				GamePage_StrategyPlanBox.register_event_type('on_select_plan')
+				
+				class GamePage_SLStrategyPlan(MessageInteractor, UIControl):
+					def __init__(self):
+						super().__init__((window,Posattr(*GAME_SLPLAN_POS)), back = Sprite(normal_menu_back))
+						
+						title = Normal_Title(GAME_SLPLAN_TITLE, GAME_SLPLAN_TITLE_POS)
+						self.title = title
+						self.sons.append(title)
+						
+						info = Normal_ScrollText('', GAME_SLPLAN_INFO_POS)
+						self.info = info
+						self.sons.append(info)
+						
+						select = GamePage_StrategyPlanBox(GAME_SLPLAN_SELECT_POS)
+						self.select = select
+						self.sons.append(select)
+						
+						class GamePages_Timetable_PlanFrame_Button(Button):
+							def __init__(self, icon_image):
+								super().__init__([window], image = Sprite(game_slplan_button_back), icon = Sprite(icon_image), pressed_image = Sprite(game_slplan_button_pressed_back), direction = 4)
+						
+						buttons_grid = Grid((window, Posattr(*GAME_SLPLAN_BUTTONS_POS)),layouter = Grid_ratelayout_gen(ROWS = 1, COLUMNS = 4, PADDING = 0, ITEM_BLANKING = 0))
+						self.buttons_grid = buttons_grid
+						self.sons.append(buttons_grid)
+						
+						copy_button = GamePages_Timetable_PlanFrame_Button(game_slplan_copy_icon)
+						remove_button = GamePages_Timetable_PlanFrame_Button(game_slplan_remove_icon)
+						use_button = GamePages_Timetable_PlanFrame_Button(game_slplan_use_icon)
+						rename_button = GamePages_Timetable_PlanFrame_Button(game_slplan_rename_icon)
+						buttons_grid.sons = [copy_button, remove_button, use_button, rename_button]
+						buttons_grid.relayout()
+						
+						confirm_button = Button((window, Posattr(*GAME_SLPLAN_CONFIRM_POS)), image = Sprite(game_slplan_confirm_image))
+						self.sons.append(confirm_button)
+						self.submit_key = (confirm_button, 'on_press')
+						
+						self.__dict__.update({key:value for key,value in locals().items() if key[-7:] == '_button'})
+					def refresh(self):
+						self.select.refresh()
+						
 				class GamePages(MultiPage):
 					def __init__(self):
 						super().__init__((window, Posattr(*GAME_PAGES_POS)))
@@ -1267,13 +1284,115 @@ class UI(pyglet.event.EventDispatcher):
 							def __init__(self):
 								super().__init__([window], back = Sprite(game_pages_timetable_back))
 								
+								class GamePages_Timetable_MessageFrame(ImageFrame):
+									def __init__(self, title_text = '', pos = DEFAULT_POS):
+										super().__init__((window, Posattr(*pos)), back = Sprite(game_pages_timetable_frame_back))
+										
+										title = Normal_Title2(title_text, GAME_PAGES_TIMETABLE_FRAME_LABEL_POS)
+										self.title = title
+										self.sons.append(title)
+										
+										left_button = Button((window,Posattr(*GAME_PAGES_TIMETABLE_FRAME_LEFT_BUTTON_POS)),image = Sprite(game_pages_timetable_frame_left_button_image))
+										self.left_button = left_button
+										self.sons.append(left_button)
+										
+										right_button = Button((window,Posattr(*GAME_PAGES_TIMETABLE_FRAME_RIGHT_BUTTON_POS)),image = Sprite(game_pages_timetable_frame_right_button_image))
+										self.right_button = right_button
+										self.sons.append(right_button)
+										
+										item_grid = Grid((window,Posattr(*GAME_PAGES_TIMETABLE_FRAME_BOARD_POS)),layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_PAGES_TIMETABLE_MESSAGES_ITEM_HEIGHT,CAL_ABSH = False))
+										self.item_grid = item_grid
+										self.sons.append(item_grid)
+								
+								timetable = GamePages_Timetable_MessageFrame(GAME_PAGES_TIMETABLE_TIMETABLE_TEXT, GAME_PAGES_TIMETABLE_TIMETABLE_POS)
+								self.timetable = timetable
+								
+								log = GamePages_Timetable_MessageFrame(GAME_PAGES_TIMETABLE_LOG_TEXT, GAME_PAGES_TIMETABLE_LOG_POS)
+								self.log = log
+								
+								self.sons += (timetable, log)
+								
+								class GamePages_Timetable_ScrollStrategyFrame(ImageFrame):
+									def __init__(self, title_text = '', pos = DEFAULT_POS):
+										super().__init__((window, Posattr(*pos)), back = Sprite(game_pages_timetable_frame_back))
+										
+										title = Normal_Title2(title_text, GAME_PAGES_TIMETABLE_FRAME_LABEL_POS)
+										self.title = title
+										self.sons.append(title)
+											
+										item_frame = SelectButtons([window],layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_PAGES_TIMETABLE_MESSAGES_STRATEGY_ITEM_HEIGHT), canceling = True)
+										# 越级访问
+										self.item_frame = item_frame
+										
+										scrollbar = Normal_ScrollBar()
+										self.scrollbar = scrollbar
+										
+										scroll_frame = ScrollFrame((window,Posattr(*GAME_PAGES_TIMETABLE_FRAME_BOARD_POS)))
+										self.scroll_frame = scroll_frame
+										self.sons.append(scroll_frame)
+										scroll_frame.frame = item_frame
+										scroll_frame.scrollbar = scrollbar
+										
+								class GamePages_Timetable_PlanFrame(GamePages_Timetable_ScrollStrategyFrame):
+									def __init__(self, title_text = '', pos = DEFAULT_POS):
+										super().__init__(title_text, pos)
+										self.scroll_frame.pos = Posattr(*GAME_PAGES_TIMETABLE_PLAN_BOARD_POS)
+										
+										buttons_grid = Grid((window, Posattr(*GAME_PAGES_TIMETABLE_PLAN_BUTTONS_POS)),layouter = Grid_ratelayout_gen(ROWS = 1, COLUMNS = 6, PADDING = 0, ITEM_BLANKING = 0))
+										self.buttons_grid = buttons_grid
+										self.sons.append(buttons_grid)
+
+										class GamePages_Timetable_PlanFrame_Button(Button):
+											def __init__(self, icon_image):
+												super().__init__([window], image = Sprite(game_pages_timetable_frame_plan_button_back), icon = Sprite(icon_image), pressed_image = Sprite(game_pages_timetable_frame_plan_button_pressed_back), direction = 4)
+										
+										add_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_add_icon)
+										edit_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_edit_icon)
+										remove_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_remove_icon)
+										save_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_save_icon)
+										# load_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_load_icon)
+										moveup_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_moveup_icon)
+										movedown_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_movedown_icon)
+										shiftup_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_shiftup_icon)
+										shiftdown_button = GamePages_Timetable_PlanFrame_Button(game_pages_timetable_plan_shiftdown_icon)
+										# sl_grid = UDButtons([window],[save_button,load_button])
+										move_grid = LRButtons([window],[moveup_button,movedown_button])
+										shift_grid = UDButtons([window],[shiftup_button,shiftdown_button])
+																											
+										self.__dict__.update({key:value for key,value in locals().items() if key[-7:] == '_button'})
+										buttons_grid.sons = (add_button, edit_button, remove_button, save_button, move_grid, shift_grid)
+										buttons_grid.relayout()
+
+										strategy_cursor = SpriteControl([window], image = Sprite(game_message_strategy_cursor), fixed_ratio = False)
+										strategy_cursor.opacity = True
+										self.strategy_cursor = strategy_cursor
+										self.sons.append(strategy_cursor)
+										
+										@save_button.event
+										def on_press():
+											GamePage_SLStrategyPlan().exe()
+										
+								plan = GamePages_Timetable_PlanFrame(GAME_PAGES_TIMETABLE_PLAN_TEXT, GAME_PAGES_TIMETABLE_PLAN_POS)
+								self.plan = plan
+								self.sons.append(plan)
+								
+								strategy = GamePages_Timetable_ScrollStrategyFrame(GAME_PAGES_TIMETABLE_STRATEGY_TEXT, GAME_PAGES_TIMETABLE_STRATEGY_POS)
+								self.strategy = strategy
+								self.sons.append(strategy)
+							def refresh(self):
+								pass
+								
 						class GamePages_Ability(ImageFrame):
 							def __init__(self):
 								super().__init__([window], back = Sprite(game_pages_ability_back))
+							def refresh(self):
+								pass
 								
 						class GamePages_Contest(ImageFrame):
 							def __init__(self):
 								super().__init__([window], back = Sprite(game_pages_contest_back))
+							def refresh(self):
+								pass
 								
 						character_page = GamePages_Character()
 						self.character_page = character_page
@@ -1287,7 +1406,7 @@ class UI(pyglet.event.EventDispatcher):
 						contest_page = GamePages_Contest()
 						self.contest_page = contest_page
 						
-						self.pages = (character_page, timetable_page, ability_page, contest_page)
+						self.pages = (character_page, timetable_page, ability_page, contest_page)	
 				
 				pages = GamePages()
 				self.pages = pages
@@ -1325,7 +1444,7 @@ class UI(pyglet.event.EventDispatcher):
 						self.strategy_label = strategy_label
 						self.sons.append(strategy_label)
 						
-						strategy_buttons = SelectButtons([window],layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_MESSAGES_BOARD_STRATEGY_ITEM_HEIGHT))
+						strategy_buttons = SelectButtons([window],layouter = Grid_defaultlayout_gen(PADDING = 0,ITEM_BLANKING = 0,ITEM_HEIGHT = GAME_MESSAGES_BOARD_STRATEGY_ITEM_HEIGHT), canceling = True)
 						# 越级访问
 						self.strategy_buttons = strategy_buttons
 						
@@ -1338,12 +1457,29 @@ class UI(pyglet.event.EventDispatcher):
 						strategy_frame.frame = strategy_buttons
 						strategy_frame.scrollbar = strategy_scroll
 						
+						strategy_cursor = SpriteControl([window], image = Sprite(game_message_strategy_cursor), fixed_ratio = False)
+						strategy_cursor.opacity = True
+						self.strategy_cursor = strategy_cursor
+						self.sons.append(strategy_cursor)
+						
 						@strategy_buttons.event
 						def on_switch(button):
 							if button == -1:
 								gameplay.current_strategy = None
 							else:
 								gameplay.current_strategy = strategy_buttons.buttons[button].key
+					def on_resize(self):
+						super().on_resize()
+						if hasattr(self, 'plan'):
+							if self.plan.sons:
+								self.strategy_cursor.abspos = self.plan.sons[0].abspos
+					def show(self):
+						super().show()
+						if hasattr(self, 'plan'):
+							if self.plan.sons:
+								self.strategy_cursor.show()
+							else:
+								self.strategy_cursor.hide()
 					def refresh(self):
 						self.timetable.sons, self.log.sons, self.plan.sons, strategy_items = gameplay.ui_data.messages_board_ui
 						self.strategy_buttons._set_buttons(strategy_items)
@@ -1356,6 +1492,10 @@ class UI(pyglet.event.EventDispatcher):
 							@i.event
 							def on_press():
 								self.strategy_buttons.button = -1
+						for i in self.plan.sons:
+							i.stage = 0
+						if self.plan.sons and gameplay.current_strategy is None:
+							self.plan.sons[0].stage = 1
 						self.timetable.relayout()
 						self.log.relayout()
 						self.plan.relayout()
@@ -1394,6 +1534,14 @@ class UI(pyglet.event.EventDispatcher):
 				self.character_board = character_board
 				self.sons += (messages_board, character_board)
 				
+				@pages.event				
+				def on_switch(page):
+					if page == 1:
+						header.messages_switch.stage = 0
+						header.messages_switch.disabled = True
+					else:
+						header.messages_switch.disabled = False
+					pages.pages[page].refresh()
 				@header.messages_switch.event
 				def on_switch(stage):
 					if stage:
@@ -1440,8 +1588,8 @@ class UI(pyglet.event.EventDispatcher):
 				# 刷新UI
 			def exe(self):
 				# 使用类名调用父类函数 -- 注意
-				UIControl.exe(self)
 				self.gameplay._play()
+				UIControl.exe(self)
 			def end(self):
 				UIControl.end(self)
 				self.gameplay._end()

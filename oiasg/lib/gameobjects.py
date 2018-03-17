@@ -22,7 +22,12 @@ class Character(object):
 class Strategy(object):
 	def __init__(self, event = None, name = '', icon = None):
 		self.__dict__.update({key:value for key,value in locals().items() if key != 'self'})
-
+class StrategyPlan(object):
+	def __init__(self, plan = None, name = ''):
+		if plan is None:
+			plan = []
+		self.__dict__.update({key:value for key,value in locals().items() if key != 'self'})
+		
 class Ability(object):
 	name = ''
 	val = 0

@@ -13,11 +13,13 @@ log_messages.append(cnt)
 
 timetable_messages.append(cnt)
 
-strategy_plans = [key for key in strategies.keys()]
+strategy_plan = [key for key in strategies.keys()]
 
 select_strategies = list(strategies.keys())
 
-cnt+=1;ui.Alert_Notitle(str(cnt)+str(current_strategy)).exe()
+cnt+=1
+
+# ui.Alert_Notitle(str(cnt)+str(current_strategy)).exe()
 ''',
 			'privilege':0
 		}
