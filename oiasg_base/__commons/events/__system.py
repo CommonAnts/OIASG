@@ -1,14 +1,14 @@
 events.update({
-	'check_timeline':event(
-		appearance = None,
-		trigger = 'cur_time > end_time',
-		effects = {
+	'check_timeline': event(
+		appearance=None,
+		trigger='cur_time > end_time',
+		effects={
 			'immediate':
-'''
-print("Game has ended:time up.")
-end()
-'''
+				'''
+				print("Game has ended:time up.")
+				end()
+				'''
 		},
-		user = {'privilege':2147483647}
+		user={'privilege': 2147483647}
 	)
 })

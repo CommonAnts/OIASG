@@ -1,10 +1,10 @@
 {
-	'APPENDICE_ITEMS':{
-		0:{
-			'name':'CommonAnts',
-			'icon':'commonants_icon.png',
-			'image':'orz.gif',
-			'text':'''P{wrap 'char'}
+	'APPENDICE_ITEMS': {
+		0: {
+			'name': 'CommonAnts',
+			'icon': 'commonants_icon.png',
+			'image': 'orz.gif',
+			'text': '''P{wrap 'char'}
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡{font_name '楷体'}蒟蒻{font_name '杨任东竹石体-Semibold'}CommonAnts{font_size 12},
 
 
@@ -57,11 +57,11 @@
 
 			'''
 		},
-		1:{
-			'name':'CommonAnts2',
-			'icon':'commonants_image.png',
-			'image':'orz.gif',
-			'text':'''
+		1: {
+			'name': 'CommonAnts2',
+			'icon': 'commonants_image.png',
+			'image': 'orz.gif',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts2{font_size 12},
 
 
@@ -70,11 +70,11 @@
 
 			'''
 		},
-		2:{
-			'name':'CommonAnts',
-			'icon':'commonants_icon.png',
-			'image':'commonants_image.png',
-			'text':'''
+		2: {
+			'name': 'CommonAnts',
+			'icon': 'commonants_icon.png',
+			'image': 'commonants_image.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts{font_size 12},
 
 
@@ -83,11 +83,11 @@
 
 			'''
 		},
-		3:{
-			'name':'CommonAnts2',
-			'icon':'commonants_image.png',
-			'image':'commonants_icon.png',
-			'text':'''
+		3: {
+			'name': 'CommonAnts2',
+			'icon': 'commonants_image.png',
+			'image': 'commonants_icon.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts2{font_size 12},
 
 
@@ -96,11 +96,11 @@
 
 			'''
 		},
-		4:{
-			'name':'CommonAnts',
-			'icon':'commonants_icon.png',
-			'image':'commonants_image.png',
-			'text':'''
+		4: {
+			'name': 'CommonAnts',
+			'icon': 'commonants_icon.png',
+			'image': 'commonants_image.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts{font_size 12},
 
 
@@ -109,11 +109,11 @@
 
 			'''
 		},
-		5:{
-			'name':'CommonAnts5-----',
-			'icon':'commonants_image.png',
-			'image':'commonants_icon.png',
-			'text':'''
+		5: {
+			'name': 'CommonAnts5-----',
+			'icon': 'commonants_image.png',
+			'image': 'commonants_icon.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts2{font_size 12},
 
 
@@ -122,11 +122,11 @@
 
 			'''
 		},
-		6:{
-			'name':'CommonAnts',
-			'icon':'commonants_icon.png',
-			'image':'commonants_image.png',
-			'text':'''
+		6: {
+			'name': 'CommonAnts',
+			'icon': 'commonants_icon.png',
+			'image': 'commonants_image.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts{font_size 12},
 
 
@@ -135,11 +135,11 @@
 
 			'''
 		},
-		7:{
-			'name':'CommonAnts2',
-			'icon':'commonants_image.png',
-			'image':'commonants_icon.png',
-			'text':'''
+		7: {
+			'name': 'CommonAnts2',
+			'icon': 'commonants_image.png',
+			'image': 'commonants_icon.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts2{font_size 12},
 
 
@@ -148,11 +148,11 @@
 
 			'''
 		},
-		8:{
-			'name':'CommonAnts',
-			'icon':'commonants_icon.png',
-			'image':'commonants_image.png',
-			'text':'''
+		8: {
+			'name': 'CommonAnts',
+			'icon': 'commonants_icon.png',
+			'image': 'commonants_image.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts{font_size 12},
 
 
@@ -161,11 +161,11 @@
 
 			'''
 		},
-		9:{
-			'name':'CommonAnts2',
-			'icon':'commonants_image.png',
-			'image':'commonants_icon.png',
-			'text':'''
+		9: {
+			'name': 'CommonAnts2',
+			'icon': 'commonants_image.png',
+			'image': 'commonants_icon.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts2{font_size 12},
 
 
@@ -174,11 +174,11 @@
 
 			'''
 		},
-		10:{
-			'name':'CommonAnts',
-			'icon':'commonants_icon.png',
-			'image':'commonants_image.png',
-			'text':'''
+		10: {
+			'name': 'CommonAnts',
+			'icon': 'commonants_icon.png',
+			'image': 'commonants_image.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts{font_size 12},
 
 
@@ -187,11 +187,11 @@
 
 			'''
 		},
-		11:{
-			'name':'CommonAnts2',
-			'icon':'commonants_image.png',
-			'image':'commonants_icon.png',
-			'text':'''
+		11: {
+			'name': 'CommonAnts2',
+			'icon': 'commonants_image.png',
+			'image': 'commonants_icon.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts2{font_size 12},
 
 
@@ -200,11 +200,11 @@
 
 			'''
 		},
-		12:{
-			'name':'CommonAnts',
-			'icon':'commonants_icon.png',
-			'image':'commonants_image.png',
-			'text':'''
+		12: {
+			'name': 'CommonAnts',
+			'icon': 'commonants_icon.png',
+			'image': 'commonants_image.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts{font_size 12},
 
 
@@ -213,11 +213,11 @@
 
 			'''
 		},
-		13:{
-			'name':'CommonAnts2',
-			'icon':'commonants_image.png',
-			'image':'commonants_icon.png',
-			'text':'''
+		13: {
+			'name': 'CommonAnts2',
+			'icon': 'commonants_image.png',
+			'image': 'commonants_icon.png',
+			'text': '''
 {font_name '杨任东竹石体-Semibold'}{font_size 28}辣鸡蒟蒻CommonAnts2{font_size 12},
 
 

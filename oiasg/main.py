@@ -2,12 +2,16 @@
 # -*- coding: UTF-8 -*-
 
 import os
+
 import pyglet
-from lib import *
-from lib.data import data, saves
-from lib.resource import resource
-from lib.ui import ui
+from .lib import *
+from .lib.data import data, saves
+from .lib.resource import resource
+from .lib.ui import ui
+
 GAMEPATH = os.path.dirname(os.path.realpath(__file__))
+
+
 class GameObject(object):
 	# 游戏体（单类）
 	def __init__(self):
@@ -19,6 +23,7 @@ class GameObject(object):
 		resource.init()
 		# 创建UI
 		ui.init()
+
 	def run(self):
 		# 显示UI
 		ui.show()
@@ -26,6 +31,7 @@ class GameObject(object):
 		pyglet.app.run()
 		# 保存数据
 		data.save()
+
 
 game = GameObject()
 game.run()

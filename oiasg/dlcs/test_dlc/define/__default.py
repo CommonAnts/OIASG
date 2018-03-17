@@ -1,3 +1,3 @@
 {
-	'PACKAGE_NAME':'Test DLC 01'
+	'PACKAGE_NAME': 'Test DLC 01'
 }
