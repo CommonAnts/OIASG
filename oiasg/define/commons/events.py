@@ -1,8 +1,8 @@
 {
-	'EVENTS':{
-		0:{
-			'trigger':'True',
-			'effect':'''
+	'EVENTS': {
+		0: {
+			'trigger': 'True',
+			'effect': '''
 pages_character_back = 'default.png'
 
 pages_character_front = 'commonants_image.png'
@@ -21,7 +21,7 @@ cnt+=1
 
 # ui.Alert_Notitle(str(cnt)+str(current_strategy)).exe()
 ''',
-			'privilege':0
+			'privilege': 0
 		}
 	}
 }

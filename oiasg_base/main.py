@@ -3,23 +3,23 @@
 import os
 import traceback
 
-# import game lib
+from lib import *
 
+# import game lib
 # import pygame
 # from pygame.locals import *
-
 # importing my modules
-
-from lib import *
 
 try:
 	ini.init_sys()
 
+
 	# debugging mode:read operations from console
 
 	def start_game(scenario):
-		g = game.gameplay(scenario,os.path.dirname(os.path.realpath(__file__)))
+		g = game.gameplay(scenario, os.path.dirname(os.path.realpath(__file__)))
 		g.run()
+
 
 	while True:
 		ope = input()
